@@ -304,3 +304,5 @@ poetry.toml
 
 saved
 submission
+trained_models/
+wandb/
