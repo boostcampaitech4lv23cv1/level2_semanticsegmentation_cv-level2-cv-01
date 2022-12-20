@@ -19,7 +19,7 @@
 5. __이슈__, __PR__ 역시 제목은 같은 형식으로 작성합니다.
     
 ```text
-<convention> <한 줄 영문설명> (이슈링크)
+<convention>: <한 줄 영문설명> (이슈링크)
 # 한 줄 띄우기
 <커밋에 대한 본문(필수 사항) 설명(한글)>
 
@@ -27,7 +27,7 @@
 
 `example`
 ```text
-fix eda index error fix (#102)
+fix: eda index error fix (#102)
 
 - 박스친 이미지를 출력하는 과정에서 생긴 인덱스 문제를 해결
 - train.py에서 함수 호출하는 방식 변경
