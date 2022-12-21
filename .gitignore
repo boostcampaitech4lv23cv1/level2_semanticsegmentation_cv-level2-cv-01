@@ -304,3 +304,4 @@ poetry.toml
 
 saved
 submission
+mmsegmentation/work_dirs/*
