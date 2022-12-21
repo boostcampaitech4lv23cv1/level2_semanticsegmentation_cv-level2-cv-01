@@ -303,4 +303,7 @@ poetry.toml
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,pycharm
 saved
 submission
+
+trained_models/
+wandb/
 mmsegmentation/work_dirs

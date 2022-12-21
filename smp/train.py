@@ -27,37 +27,42 @@ import segmentation_models_pytorch as smp
 
 from dataset import *
 
+# when using xception encoder
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 def parse_args():
     parser = ArgumentParser()
 
     # model
-    parser.add_argument('--encoder_name', type=str, default='efficientnet-b0')
+    parser.add_argument('--segmentation_model', type=str, default='Unet')       # [Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN]
+    parser.add_argument('--encoder_name', type=str, default='resnet34')
     parser.add_argument('--encoder_weights', type=str, default='imagenet')
 
     # path
-    parser.add_argument('--saved_dir', type=str, default='/opt/ml/input/code/saved')
+    parser.add_argument('--saved_dir', type=str, default='trained_models')
 
     # dataset path
     parser.add_argument('--train_path', type=str, default='/opt/ml/input/data/train.json')
-    #parser.add_argument('--train_path', type=str, default='/opt/ml/input/data/val.json')
     parser.add_argument('--valid_path', type=str, default='/opt/ml/input/data/val.json')
 
     # hyperparameters
-    parser.add_argument('--num_epochs', type=int, default=30) # 20
-    parser.add_argument('--criterion', type=str, default='CrossEntropyLoss')
+    parser.add_argument('--num_epochs', type=int, default=50) # 20
+    parser.add_argument('--criterion', type=str, default='CrossEntropyLoss')    # [CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss]
     parser.add_argument('--learning_rate', type=float, default=1e-3) # 1e-4
     parser.add_argument('--weight_decay', type=float, default=1e-6)
-    parser.add_argument('--train_batch_size', type=int, default=8)
-    parser.add_argument('--valid_batch_size', type=int, default=8)
+    parser.add_argument('--train_batch_size', type=int, default=16)
+    parser.add_argument('--valid_batch_size', type=int, default=16)
     parser.add_argument('--optimizer', type=str, default='Adam')
+    parser.add_argument('--num_workers', type=int, default=4)
 
     # mixup
     parser.add_argument('--mixup', type=bool, default=False)
     parser.add_argument('--alpha', type=float, default=0.2)
     
     # early stopping
-    parser.add_argument('--early_stop', type=bool, default=False)
-    parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--early_stop', type=bool, default=True)
+    parser.add_argument('--patience', type=int, default=7)
 
     # settings
     parser.add_argument('--seed', type=int, default=2022)
@@ -65,13 +70,14 @@ def parse_args():
     parser.add_argument('--device', type=str, default="cuda" if torch.cuda.is_available() else "cpu")
 
     # wandb
-    parser.add_argument('--wandb_project', type=str, default='segmentation')
-    parser.add_argument('--wandb_entity', type=str, default='cv-1')
+    parser.add_argument('--wandb_project', type=str, default='segmentation_practice')
+    parser.add_argument('--wandb_entity', type=str, default='myeongheonchoi')
     parser.add_argument('--wandb_run', type=str, default='exp')
 
     args = parser.parse_args()
-
-    args.wandb_run = args.encoder_name # 모델 sweep 용 모델명으로 이름 지정 -> 필요없으면 지워도됨
+    
+    # 모델 sweep 용 모델명으로 이름 지정 -> 필요없으면 지워도됨
+    args.wandb_run = args.segmentation_model + '_' + args.encoder_name + '_' + args.encoder_weights
 
     # early stop 안쓰는 경우 patience를 num_epochs으로 설정
     if not args.early_stop:
@@ -98,7 +104,7 @@ def get_lr(optimizer):
 def collate_fn(batch):
     return tuple(zip(*batch))
 
-def save_model(model, saved_dir, file_name='efficient_unet_best_model.pt'):
+def save_model(model, saved_dir, file_name):
     check_point = {'net': model.state_dict()}
     output_path = os.path.join(saved_dir, file_name)
     torch.save(check_point, output_path)
@@ -144,11 +150,13 @@ def train(args):
         "learning_rate": args.learning_rate, 
         "train_batch_size":args.train_batch_size,
         "valid_batch_size":args.valid_batch_size,
+        "criterion":args.criterion,
+        "optimizer":args.optimizer,
         "max_epoch":args.num_epochs,
         "val_every": args.val_every,
         "seed": args.seed,
-        "wandbproject":args.wandb_project,
-        "wandbentity":args.wandb_entity
+        "wandb_project":args.wandb_project,
+        "wandb_entity":args.wandb_entity
     })
 
     train_transform = A.Compose([
@@ -178,35 +186,40 @@ def train(args):
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, 
                                             batch_size=args.train_batch_size,
                                             shuffle=True,
-                                            num_workers=4,
+                                            num_workers=args.num_workers,
                                             collate_fn=collate_fn)
 
     valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, 
                                             batch_size=args.valid_batch_size,
                                             shuffle=False,
-                                            num_workers=4,
+                                            num_workers=args.num_workers,
                                             collate_fn=collate_fn)
 
-
     # --model
-    model = smp.Unet(
+    model_module = getattr(import_module("segmentation_models_pytorch"), args.segmentation_model)
+    model = model_module(
         encoder_name=args.encoder_name,       # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
         encoder_weights=args.encoder_weights, # use `imagenet` pre-trained weights for encoder initialization
         in_channels=3,                        # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=11,                           # model output channels (number of classes in your dataset)
     )
 
+    # --criterion
+    if args.criterion == 'CrossEntropyLoss':
+        criterion = getattr(import_module("torch.nn"), args.criterion)()
+    else:
+        criterion = getattr(import_module("segmentation_models_pytorch.losses"), args.criterion)()
+
     # --optimizer
-    criterion = getattr(import_module("torch.nn"), args.criterion)()
     opt_module = getattr(import_module("torch.optim"), args.optimizer)
     optimizer = opt_module(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=args.learning_rate,
         weight_decay=args.weight_decay
     )
-
-
     scheduler = MultiStepLR(optimizer, milestones=[args.num_epochs // 2], gamma=0.1)
+    
+    scaler = torch.cuda.amp.GradScaler()
 
     # Early Stopping 변수
     counter = 0
@@ -234,13 +247,17 @@ def train(args):
 
     with open(os.path.join(saved_dir,'log.txt'), 'w') as f:
         for epoch in range(args.num_epochs):
+
             model.train()
-            #epoch_start = time.time()
+
             hist = np.zeros((n_class, n_class))
+            train_loss = 0
 
             with tqdm(total=num_train_batches) as pbar:
                 for step, (images, masks, _) in enumerate(train_loader):
                     pbar.set_description(f'[Train] Epoch [{epoch+1}/{args.num_epochs}]')
+
+                    optimizer.zero_grad()
 
                     if args.mixup:
                         images, masks = Mixup(images, masks, alpha=args.alpha)
@@ -250,37 +267,53 @@ def train(args):
                     
                     images, masks = images.to(device), masks.to(device)
                     model = model.to(device)
-                    outputs = model(images)
-                    loss = criterion(outputs, masks)
+
+                    with torch.cuda.amp.autocast():
+                        outputs = model(images)
+                        loss = criterion(outputs, masks)
                     
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                        
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                    
+                    # optimizer.zero_grad()
+                    # loss.backward()
+                    # optimizer.step()
+                    
                     outputs = torch.argmax(outputs, dim=1).detach().cpu().numpy()
                     masks = masks.detach().cpu().numpy()
-                        
+                    
                     hist = add_hist(hist, masks, outputs, n_class=n_class)
                     acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
-                        
-                    pbar.update(1)
-
-                    pbar.set_postfix({
-                        'Loss': round(loss.item(),4), 'mIoU': round(mIoU,4)})
                     
-                pbar.close()
-                print(f'[Train {epoch+1:>03d}] Epoch [{epoch+1}/{args.num_epochs}] | Loss: {round(loss.item(),4)} | mIoU: {round(mIoU,4)}')
-                f.write(f'[Train {epoch+1:>03d}] Epoch [{epoch+1}/{args.num_epochs}] | Loss: {round(loss.item(),4)} | mIoU: {round(mIoU,4)} \n')
-
+                    pbar.update(1)
+                    
+                    pbar.set_postfix({
+                        'Loss' : round(loss.item(),4), 
+                        'Accuracy' : round(acc, 4),
+                        'mIoU' : round(mIoU,4)
+                        })
+                    
+                    train_loss += loss.item()
             
             scheduler.step()
+            
+            train_log = '[EPOCH TRAIN {}/{}] : Train Loss {} - Train Accuracy {} - Train mIoU {}'.format(epoch+1, 
+                                                                                                        args.num_epochs, 
+                                                                                                        round(train_loss / len(train_loader), 4),
+                                                                                                        round(acc, 4),
+                                                                                                        round(mIoU, 4))
+            print(train_log)
+            f.write(train_log + '\n')
 
             wandb.log({
-                "train/loss": round(loss.item(),4),
+                "train/loss": round(train_loss / len(train_loader),4),
                 "train/mIoU": round(mIoU,4),
                 "train/accuracy" : round(acc, 4),
-                "train/learning_rate" : scheduler.get_last_lr()[0]
+                "train/learning_rate" : get_lr(optimizer)
             })
+
+            save_model(model, saved_dir, 'latest.pt')
                                         
             # validation 주기에 따른 loss 출력 및 best model 저장
             if (epoch + 1) % args.val_every == 0:
@@ -317,65 +350,62 @@ def train(args):
                             masks = masks.detach().cpu().numpy()
                             
                             hist = add_hist(hist, masks, outputs, n_class=n_class)
+                            acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
 
                             pbar.update(1)
 
-                            pbar.set_postfix({'Total Loss': round(total_loss.item(), 4)})
+                            pbar.set_postfix({
+                                'Loss': round(total_loss.item() / cnt, 4), 
+                                'Accuracy' : round(acc, 4),
+                                'mIoU' : round(mIoU,4)
+                                })
+                    
+                    #IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , sorted_df['Categories'])]
+                    IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , categories)]
+                    IoU_by_class_logging = [[classes, round(IoU,4)] for IoU, classes in zip(IoU , categories)]
+                    IoU_by_class_table = wandb.Table(data=IoU_by_class_logging, columns=['label','value'])
+                    
+                    avrg_loss = total_loss.item() / cnt
+                    valid_log = '[EPOCH VALID {}/{}] : Valid Loss {} - Valid Accuracy {} - Valid mIoU {}'.format(epoch+1, 
+                                                                                                                args.num_epochs, 
+                                                                                                                round(avrg_loss, 4),
+                                                                                                                round(acc, 4),
+                                                                                                                round(mIoU, 4))
+                    print(valid_log)
+                    f.write(valid_log + '\n')
                         
-                        acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
-                        #IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , sorted_df['Categories'])]
-                        IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , categories)]
-                        IoU_by_class_logging = [[classes, round(IoU,4)] for IoU, classes in zip(IoU , categories)]
-                        IoU_by_class_table = wandb.Table(data=IoU_by_class_logging, columns=['label','value'])
-                        
-                        avrg_loss = total_loss / cnt
-                        pbar.close()
-                        print(f'[Valid {epoch+1:>03d}] Total Loss: {round(total_loss.item(), 4)} | Average Loss: {round(avrg_loss.item(), 4)} | Accuracy : {round(acc, 4)} | mIoU: {round(mIoU, 4)} \nIoU by class : {IoU_by_class}')
-                        f.write(f'[Valid {epoch+1:>03d}] Total Loss: {round(total_loss.item(), 4)} | Average Loss: {round(avrg_loss.item(), 4)} | Accuracy : {round(acc, 4)} | mIoU: {round(mIoU, 4)} \nIoU by class : {IoU_by_class}\n')
-                        
-
-                    pbar.close()
                     wandb.log({
-                        "valid/Average Loss": round(avrg_loss.item(), 4),
+                        "valid/Average Loss": round(avrg_loss, 4),
                         "valid/Accuracy": round(acc, 4),
                         "valid/mIoU": round(mIoU, 4),
                         "valid/IoU_by_class_table" : wandb.plot.bar(IoU_by_class_table, 'label','value', title='IoU By Class') 
                     })
 
-                    if not os.path.isdir(saved_dir):                                                           
-                            os.mkdir(saved_dir)
-                    save_model(model, saved_dir, file_name=args.encoder_name+'_latest.pt')
+                if avrg_loss < best_loss:
+                    print(f"!!! Best Loss at epoch: {epoch + 1} !!!")
+                    f.write(f"!!! Best Loss at epoch: {epoch + 1} !!!\n")
+                    best_loss = avrg_loss
+                    save_model(model, saved_dir, 'best_loss.pt')
 
-                    if avrg_loss < best_loss:
-                        print(f"Best avrg_loss at epoch: {epoch + 1}")
-                        best_loss = avrg_loss
-                        save_model(model, saved_dir, file_name=args.encoder_name+'_best_loss.pt')
+                if best_mIoU < mIoU:
+                    print(f"!!! Best mIoU at epoch: {epoch + 1} !!!")
+                    f.write(f"!!! Best mIoU at epoch: {epoch + 1} !!!\n")
+                    best_mIoU = mIoU
+                    save_model(model, saved_dir, 'best_mIoU.pt')
+                    counter = 0
+                else:
+                    counter += 1
 
-                    elif best_mIoU < mIoU:
-                        print(f"Best mIoU at epoch: {epoch + 1}")
-                        best_mIoU = mIoU
-                        save_model(model, saved_dir, file_name=args.encoder_name+'_best_mIoU.pt')
-                        counter = 0
+                # patience 횟수 동안 성능 향상이 없으면 학습 종료
+                if counter > args.patience:
+                    print(f"Early Stopping at epoch {epoch + 1}...")
+                    f.write(f"Early Stopping at epoch {epoch + 1}...")
+                    f.close()
+                    break
 
-                    else:
-                        counter += 1
-
-                    # patience 횟수 동안 성능 향상이 없으면 학습 종료
-                    if counter > args.patience:
-                        print(f"Early Stopping at epoch {epoch + 1}...")
-                        f.write(f"Early Stopping at epoch {epoch + 1}...")
-                        f.close()
-                        break
-    
-    f.close()
-
-
-    
-
-
-def main(args):
-    train(**args.__dict__)
-
-if __name__=='__main__':
+def main():
     args = parse_args()
     train(args)
+
+if __name__=='__main__':
+    main()
