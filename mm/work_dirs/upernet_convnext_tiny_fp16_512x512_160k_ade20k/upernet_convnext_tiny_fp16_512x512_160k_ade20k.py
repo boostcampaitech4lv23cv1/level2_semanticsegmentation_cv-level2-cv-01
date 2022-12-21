@@ -43,14 +43,14 @@ model = dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.4)),
     train_cfg=dict(),
     test_cfg=dict(mode='slide', crop_size=(512, 512), stride=(341, 341)))
-dataset_type = 'ADE20KDataset'
+dataset_type = 'MyCustomDataset'
 data_root = '/opt/ml/input/data/batch_02_vt'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 crop_size = (512, 512)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', reduce_zero_label=True),
+    dict(type='LoadAnnotations'),
     dict(type='Resize', img_scale=(2048, 512), ratio_range=(0.5, 2.0)),
     dict(type='RandomCrop', crop_size=(512, 512), cat_max_ratio=0.75),
     dict(type='RandomFlip', prob=0.5),
@@ -86,13 +86,13 @@ data = dict(
     samples_per_gpu=2,
     workers_per_gpu=4,
     train=dict(
-        type='ADE20KDataset',
+        type='MyCustomDataset',
         data_root='/opt/ml/input/data/batch_02_vt',
-        img_dir='/opt/ml/input/data/batch_02_vt',
-        ann_file='/opt/ml/input/data/train/train.json',
+        img_dir='/opt/ml/input/data/batch_02_vt/img_dir',
+        ann_dir='/opt/ml/input/data/batch_02_vt/ann_dir',
         pipeline=[
             dict(type='LoadImageFromFile'),
-            dict(type='LoadAnnotations', reduce_zero_label=True),
+            dict(type='LoadAnnotations'),
             dict(type='Resize', img_scale=(2048, 512), ratio_range=(0.5, 2.0)),
             dict(type='RandomCrop', crop_size=(512, 512), cat_max_ratio=0.75),
             dict(type='RandomFlip', prob=0.5),
@@ -107,10 +107,10 @@ data = dict(
             dict(type='Collect', keys=['img', 'gt_semantic_seg'])
         ]),
     val=dict(
-        type='ADE20KDataset',
+        type='MyCustomDataset',
         data_root='/opt/ml/input/data/batch_02_vt',
-        img_dir='/opt/ml/input/data/batch_02_vt',
-        ann_file='/opt/ml/input/data/vaalid/valid.json',
+        img_dir='/opt/ml/input/data/batch_02_vt/img_dir',
+        ann_dir='/opt/ml/input/data/batch_02_vt/ann_dir',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(
@@ -130,10 +130,10 @@ data = dict(
                 ])
         ]),
     test=dict(
-        type='ADE20KDataset',
+        type='MyCustomDataset',
         data_root='/opt/ml/input/data/batch_02_vt',
-        img_dir='/opt/ml/input/data/batch_02_vt',
-        ann_file='/opt/ml/input/data/test/test.sjon',
+        img_dir='/opt/ml/input/data/batch_02_vt/img_dir',
+        ann_dir='/opt/ml/input/data/batch_02_vt/ann_dir',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(

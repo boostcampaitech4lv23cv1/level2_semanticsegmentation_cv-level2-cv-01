@@ -6,8 +6,7 @@ from .cityscapes import CityscapesDataset
 from .coco_stuff import COCOStuffDataset
 from .custom import CustomDataset
 from .dark_zurich import DarkZurichDataset
-from .dataset_wrappers import (ConcatDataset, MultiImageMixDataset,
-                               RepeatDataset)
+from .dataset_wrappers import ConcatDataset, MultiImageMixDataset, RepeatDataset
 from .drive import DRIVEDataset
 from .face import FaceOccludedDataset
 from .hrf import HRFDataset
@@ -19,13 +18,33 @@ from .pascal_context import PascalContextDataset, PascalContextDataset59
 from .potsdam import PotsdamDataset
 from .stare import STAREDataset
 from .voc import PascalVOCDataset
+from .custom_dataset import MyCustomDataset
 
 __all__ = [
-    'CustomDataset', 'build_dataloader', 'ConcatDataset', 'RepeatDataset',
-    'DATASETS', 'build_dataset', 'PIPELINES', 'CityscapesDataset',
-    'PascalVOCDataset', 'ADE20KDataset', 'PascalContextDataset',
-    'PascalContextDataset59', 'ChaseDB1Dataset', 'DRIVEDataset', 'HRFDataset',
-    'STAREDataset', 'DarkZurichDataset', 'NightDrivingDataset',
-    'COCOStuffDataset', 'LoveDADataset', 'MultiImageMixDataset',
-    'iSAIDDataset', 'ISPRSDataset', 'PotsdamDataset', 'FaceOccludedDataset'
+    "CustomDataset",
+    "build_dataloader",
+    "ConcatDataset",
+    "RepeatDataset",
+    "DATASETS",
+    "build_dataset",
+    "PIPELINES",
+    "CityscapesDataset",
+    "PascalVOCDataset",
+    "ADE20KDataset",
+    "PascalContextDataset",
+    "PascalContextDataset59",
+    "ChaseDB1Dataset",
+    "DRIVEDataset",
+    "HRFDataset",
+    "STAREDataset",
+    "DarkZurichDataset",
+    "NightDrivingDataset",
+    "COCOStuffDataset",
+    "LoveDADataset",
+    "MultiImageMixDataset",
+    "iSAIDDataset",
+    "ISPRSDataset",
+    "PotsdamDataset",
+    "FaceOccludedDataset",
+    "MyCustomDataset",
 ]

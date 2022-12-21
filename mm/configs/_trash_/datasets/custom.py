@@ -7,7 +7,7 @@ img_norm_cfg = dict(
 crop_size = (512, 512)
 train_pipeline = [
     dict(type="LoadImageFromFile"),
-    dict(type="LoadAnnotations", reduce_zero_label=True),
+    dict(type="LoadAnnotations"),
     dict(type="Resize", img_scale=(2048, 512), ratio_range=(0.5, 2.0)),
     dict(type="RandomCrop", crop_size=crop_size, cat_max_ratio=0.75),
     dict(type="RandomFlip", prob=0.5),
@@ -41,7 +41,6 @@ data = dict(
         data_root=data_root,
         img_dir="/opt/ml/input/data/batch_02_vt/img_dir",
         ann_dir="/opt/ml/input/data/batch_02_vt/ann_dir",
-        # ann_file='/opt/ml/input/data/train/train.json',
         pipeline=train_pipeline,
     ),
     val=dict(
@@ -49,7 +48,6 @@ data = dict(
         data_root=data_root,
         img_dir="/opt/ml/input/data/batch_02_vt/img_dir",
         ann_dir="/opt/ml/input/data/batch_02_vt/ann_dir",
-        # ann_file ='/opt/ml/input/data/vaalid/valid.json',
         pipeline=test_pipeline,
     ),
     test=dict(
@@ -57,7 +55,6 @@ data = dict(
         data_root=data_root,
         img_dir="/opt/ml/input/data/batch_02_vt/img_dir",
         ann_dir="/opt/ml/input/data/batch_02_vt/ann_dir",
-        # ann_file='/opt/ml/input/data/test/test.sjon',
         pipeline=test_pipeline,
     ),
 )
