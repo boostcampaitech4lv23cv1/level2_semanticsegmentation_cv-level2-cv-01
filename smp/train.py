@@ -36,7 +36,7 @@ def parse_args():
 
     # model
     parser.add_argument('--segmentation_model', type=str, default='Unet')       # [Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN]
-    parser.add_argument('--encoder_name', type=str, default='efficientnet-b0')
+    parser.add_argument('--encoder_name', type=str, default='resnet34')
     parser.add_argument('--encoder_weights', type=str, default='imagenet')
 
     # path
@@ -47,12 +47,12 @@ def parse_args():
     parser.add_argument('--valid_path', type=str, default='/opt/ml/input/data/val.json')
 
     # hyperparameters
-    parser.add_argument('--num_epochs', type=int, default=30) # 20
+    parser.add_argument('--num_epochs', type=int, default=50) # 20
     parser.add_argument('--criterion', type=str, default='CrossEntropyLoss')    # [CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss]
     parser.add_argument('--learning_rate', type=float, default=1e-3) # 1e-4
     parser.add_argument('--weight_decay', type=float, default=1e-6)
-    parser.add_argument('--train_batch_size', type=int, default=8)
-    parser.add_argument('--valid_batch_size', type=int, default=8)
+    parser.add_argument('--train_batch_size', type=int, default=16)
+    parser.add_argument('--valid_batch_size', type=int, default=16)
     parser.add_argument('--optimizer', type=str, default='Adam')
     parser.add_argument('--num_workers', type=int, default=4)
 
@@ -61,8 +61,8 @@ def parse_args():
     parser.add_argument('--alpha', type=float, default=0.2)
     
     # early stopping
-    parser.add_argument('--early_stop', type=bool, default=False)
-    parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--early_stop', type=bool, default=True)
+    parser.add_argument('--patience', type=int, default=7)
 
     # settings
     parser.add_argument('--seed', type=int, default=2022)
@@ -403,9 +403,9 @@ def train(args):
                     f.close()
                     break
 
-def main(args):
-    train(**args.__dict__)
-
-if __name__=='__main__':
+def main():
     args = parse_args()
     train(args)
+
+if __name__=='__main__':
+    main()
