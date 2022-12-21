@@ -47,12 +47,12 @@ def parse_args():
     parser.add_argument('--valid_path', type=str, default='/opt/ml/input/data/val.json')
 
     # hyperparameters
-    parser.add_argument('--num_epochs', type=int, default=50) # 20
+    parser.add_argument('--num_epochs', type=int, default=40) # 20
     parser.add_argument('--criterion', type=str, default='CrossEntropyLoss')    # [CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss]
-    parser.add_argument('--learning_rate', type=float, default=1e-3) # 1e-4
+    parser.add_argument('--learning_rate', type=float, default=1e-4) # 1e-4
     parser.add_argument('--weight_decay', type=float, default=1e-6)
-    parser.add_argument('--train_batch_size', type=int, default=16)
-    parser.add_argument('--valid_batch_size', type=int, default=16)
+    parser.add_argument('--train_batch_size', type=int, default=32)
+    parser.add_argument('--valid_batch_size', type=int, default=64)
     parser.add_argument('--optimizer', type=str, default='Adam')
     parser.add_argument('--num_workers', type=int, default=4)
 
@@ -61,7 +61,7 @@ def parse_args():
     parser.add_argument('--alpha', type=float, default=0.2)
     
     # early stopping
-    parser.add_argument('--early_stop', type=bool, default=True)
+    parser.add_argument('--early_stop', type=bool, default=False)
     parser.add_argument('--patience', type=int, default=7)
 
     # settings
@@ -77,7 +77,7 @@ def parse_args():
     args = parser.parse_args()
     
     # 모델 sweep 용 모델명으로 이름 지정 -> 필요없으면 지워도됨
-    args.wandb_run = args.segmentation_model + '_' + args.encoder_name + '_' + args.encoder_weights
+    args.wandb_run += "_" + args.segmentation_model + '_' + args.encoder_name + '_' + args.encoder_weights
 
     # early stop 안쓰는 경우 patience를 num_epochs으로 설정
     if not args.early_stop:
@@ -161,11 +161,10 @@ def train(args):
 
     train_transform = A.Compose([
                                 # A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256),
-                                # A.Resize(512, 512),
                                 # A.GridDropout(ratio = 0.5),
                                 #A.RandomRotate90(),
-                                #A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
-                                #            max_pixel_value=1.0),
+                                A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
+                                           max_pixel_value=1.0),
                                 ToTensorV2()
                                 ])
 
@@ -217,8 +216,9 @@ def train(args):
         lr=args.learning_rate,
         weight_decay=args.weight_decay
     )
-    scheduler = MultiStepLR(optimizer, milestones=[args.num_epochs // 2], gamma=0.1)
-    
+    # scheduler = MultiStepLR(optimizer, milestones=[args.num_epochs // 2], gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.num_epochs, last_epoch=-1)
+                                                           
     scaler = torch.cuda.amp.GradScaler()
 
     # Early Stopping 변수
