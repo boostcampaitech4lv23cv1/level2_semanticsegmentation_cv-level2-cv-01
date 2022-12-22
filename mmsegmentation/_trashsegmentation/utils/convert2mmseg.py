@@ -20,6 +20,8 @@ category_names = [
     "Battery",
     "Clothing",
 ]
+img_dir = "images"
+ann_dir = "annotations"
 
 
 def get_classname(classID, cats):
@@ -37,7 +39,8 @@ def copy_img(json_path, json_name):
         shutil.copyfile(
             os.path.join(data_root, image["file_name"]),
             os.path.join(
-                data_root, f"mmseg/img_dir/{json_name}/{str(image['id']).zfill(4)}.jpg"
+                data_root,
+                f"mmseg/{img_dir}/{json_name}/{str(image['id']).zfill(4)}.jpg",
             ),
         )
 
@@ -69,7 +72,7 @@ def gen_mask(json_path, json_name):
         cv2.imwrite(
             os.path.join(
                 data_root,
-                f"mmseg/ann_dir/{json_name}/{str(image_info['id']).zfill(4)}.png",
+                f"mmseg/{ann_dir}/{json_name}/{str(image_info['id']).zfill(4)}.png",
             ),
             masks,
         )
@@ -79,7 +82,7 @@ def main(json_path):
     json_name = json_path.split("/")[-1].split(".")[0]
 
     if json_name != "test":
-        for folder in ["mmseg/img_dir", "mmseg/ann_dir"]:
+        for folder in [f"mmseg/{img_dir}", f"mmseg/{ann_dir}"]:
             os.makedirs(
                 os.path.join(data_root, os.path.join(folder, json_name)), exist_ok=True
             )
@@ -87,7 +90,7 @@ def main(json_path):
         gen_mask(json_path, json_name)
     else:
         os.makedirs(
-            os.path.join(data_root, os.path.join("mmseg/img_dir", json_name)),
+            os.path.join(data_root, os.path.join(f"mmseg/{img_dir}", json_name)),
             exist_ok=True,
         )
         copy_img(json_path, json_name)
