@@ -71,7 +71,7 @@ def parse_args():
 
     # wandb
     parser.add_argument('--wandb_project', type=str, default='segmentation_practice')
-    parser.add_argument('--wandb_entity', type=str, default='myeongheonchoi')
+    parser.add_argument('--wandb_entity', type=str, default='cv_1')
     parser.add_argument('--wandb_run', type=str, default='exp')
 
     args = parser.parse_args()
@@ -160,17 +160,15 @@ def train(args):
     })
 
     train_transform = A.Compose([
-                                # A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256),
-                                # A.GridDropout(ratio = 0.5),
-                                #A.RandomRotate90(),
+                                A.VerticalFlip(p=0.5),
                                 A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
                                            max_pixel_value=1.0),
                                 ToTensorV2()
                                 ])
 
     val_transform = A.Compose([
-                            #A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
-                            #            max_pixel_value=1.0),
+                            A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
+                                       max_pixel_value=1.0),
                             ToTensorV2()
                             ])
 
