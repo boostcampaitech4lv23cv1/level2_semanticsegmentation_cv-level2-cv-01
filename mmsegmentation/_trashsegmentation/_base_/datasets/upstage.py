@@ -128,7 +128,7 @@ data = dict(
         img_dir=data_root + "test",
         pipeline=test_pipeline,
     ),
-    train_dataloader=dict(samples_per_gpu=16, workers_per_gpu=4, shuffle=True),
+    train_dataloader=dict(samples_per_gpu=32, workers_per_gpu=4, shuffle=True),
     val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
 )
