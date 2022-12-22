@@ -203,11 +203,8 @@ def plot_examples(args):
         result.sort(key=lambda x:x[-2])
         print(f'IoU by class : {IoU_by_class}')
 
-    
-    fig, ax = plt.subplots(nrows=args.num_examples, ncols=3, figsize=(12, 4*args.num_examples), constrained_layout=True)
-    fig.tight_layout()
-
     # worst 저장
+    fig, ax = plt.subplots(nrows=args.num_examples, ncols=3, figsize=(12, 4*args.num_examples), constrained_layout=True)
     for i, (image_infos, imgs, masks, outs, mIoU, IoU_by_class) in enumerate(result[:args.num_examples]):
         # Original Image
         ax[i][0].imshow(imgs.transpose([1,2,0]))
@@ -222,9 +219,11 @@ def plot_examples(args):
         ax[i][2].set_title(f"Pred Mask : {image_infos['file_name']}")
         ax[i][2].legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
     
+    fig.tight_layout()
     plt.savefig(os.path.join(args.base_dir,args.ckpt.split('.')[0]+f'_worst_{args.num_examples}.jpg'))
 
     # best 저장
+    fig, ax = plt.subplots(nrows=args.num_examples, ncols=3, figsize=(12, 4*args.num_examples), constrained_layout=True)
     for i, (image_infos, imgs, masks, outs, mIoU, IoU_by_class) in enumerate(result[-args.num_examples:]):
         # Original Image
         ax[i][0].imshow(imgs.transpose([1,2,0]))
@@ -239,6 +238,7 @@ def plot_examples(args):
         ax[i][2].set_title(f"Pred Mask : {image_infos['file_name']}")
         ax[i][2].legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
     
+    fig.tight_layout()
     plt.savefig(os.path.join(args.base_dir,args.ckpt.split('.')[0]+f'_best_{args.num_examples}.jpg'))
 
 def main():
