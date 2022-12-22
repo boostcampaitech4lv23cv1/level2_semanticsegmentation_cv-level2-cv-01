@@ -99,9 +99,9 @@ test_pipeline = [
         ],
     ),
 ]
+
+
 data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=2,
     train=dict(
         classes=classes,
         palette=palette,
@@ -128,4 +128,7 @@ data = dict(
         img_dir=data_root + "test",
         pipeline=test_pipeline,
     ),
+    train_dataloader=dict(samples_per_gpu=16, workers_per_gpu=4, shuffle=True),
+    val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
+    test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
 )
