@@ -185,17 +185,23 @@ def train(args):
             # A.Resize(512, 512),
             # A.GridDropout(ratio = 0.5),
             # A.RandomRotate90(),
-            # A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
-            #            max_pixel_value=1.0),
-            ToTensorV2()
+            A.Normalize(
+                mean=[0.46009142, 0.43957697, 0.41827273],
+                std=[0.21060736, 0.20755924, 0.21633709],
+                max_pixel_value=1.0,
+            ),
+            ToTensorV2(),
         ]
     )
 
     val_transform = A.Compose(
         [
-            # A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
-            #            max_pixel_value=1.0),
-            ToTensorV2()
+            A.Normalize(
+                mean=[0.46009142, 0.43957697, 0.41827273],
+                std=[0.21060736, 0.20755924, 0.21633709],
+                max_pixel_value=1.0,
+            ),
+            ToTensorV2(),
         ]
     )
 
