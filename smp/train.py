@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument(
         "--segmentation_model", type=str, default="Unet"
     )  # [Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN]
-    parser.add_argument("--encoder_name", type=str, default="resnet34")
+    parser.add_argument("--encoder_name", type=str, default="mit_b2")
     parser.add_argument("--encoder_weights", type=str, default="imagenet")
 
     # path
@@ -58,13 +58,15 @@ def parse_args():
     parser.add_argument(
         "--criterion", type=str, default="CrossEntropyLoss"
     )  # [CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss]
-    parser.add_argument("--learning_rate", type=float, default=1e-3)  # 1e-4
+    parser.add_argument("--learning_rate", type=float, default=1e-4)  # 1e-4
     parser.add_argument("--weight_decay", type=float, default=1e-6)
-    parser.add_argument("--train_batch_size", type=int, default=16)
-    parser.add_argument("--valid_batch_size", type=int, default=16)
+    parser.add_argument("--train_batch_size", type=int, default=32)
+    parser.add_argument("--valid_batch_size", type=int, default=64)
     parser.add_argument("--optimizer", type=str, default="Adam")
     parser.add_argument("--num_workers", type=int, default=4)
-
+    parser.add_argument(
+        "--scheduler", type=str, default="MultiStepLR"
+    )  # [MultiStepLR, ExponentialLR, CosineAnnealingLR, OneCycleLR,CosineAnnealingWarmRestarts]
     # mixup
     parser.add_argument("--mixup", type=bool, default=False)
     parser.add_argument("--alpha", type=float, default=0.2)
@@ -81,15 +83,21 @@ def parse_args():
     )
 
     # wandb
-    parser.add_argument("--wandb_project", type=str, default="segmentation_practice")
-    parser.add_argument("--wandb_entity", type=str, default="myeongheonchoi")
+    parser.add_argument("--wandb_project", type=str, default="Semantic_Segmentation")
+    parser.add_argument("--wandb_entity", type=str, default="quasar529")
     parser.add_argument("--wandb_run", type=str, default="exp")
 
     args = parser.parse_args()
 
     # 모델 sweep 용 모델명으로 이름 지정 -> 필요없으면 지워도됨
     args.wandb_run = (
-        args.segmentation_model + "_" + args.encoder_name + "_" + args.encoder_weights
+        args.segmentation_model
+        + "_"
+        + args.encoder_name
+        + "_"
+        + args.encoder_weights
+        + "_"
+        + args.scheduler
     )
 
     # early stop 안쓰는 경우 patience를 num_epochs으로 설정
@@ -258,8 +266,26 @@ def train(args):
         lr=args.learning_rate,
         weight_decay=args.weight_decay,
     )
-    scheduler = MultiStepLR(optimizer, milestones=[args.num_epochs // 2], gamma=0.1)
-
+    # --scheduler
+    # [MultiStepLR, ExponentialLR, CosineAnnealingLR, OneCycleLR,CosineAnnealingWarmRestarts]
+    if args.scheduler == "MutliStepLR":
+        scheduler = MultiStepLR(optimizer, milestones=[args.num_epochs // 2], gamma=0.1)
+    elif args.scheduler == "ExponentialLR":
+        scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
+            optimizer=optimizer, gamma=0.5
+        )
+    elif args.scheduler == "CosineAnnealingLR":
+        scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
+            optimizer=optimizer, T_max=10
+        )
+    elif args.scheduler == "OneCycleLR":
+        scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
+            optimizer=optimizer, max_lr=1e-2, epochs=args.num_epochs, steps_per_epoch=10
+        )
+    elif args.scheduler == "CosineAnnealingWarmRestarts":
+        scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
+            optimizer=optimizer, T_0=10, T_mult=10
+        )
     scaler = torch.cuda.amp.GradScaler()
 
     # Early Stopping 변수
