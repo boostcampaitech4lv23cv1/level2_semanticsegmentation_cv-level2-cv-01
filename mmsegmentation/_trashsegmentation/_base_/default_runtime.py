@@ -9,7 +9,7 @@ log_config = dict(
             init_kwargs=dict(
                 entity="kidsarebornstars",
                 project="segmentation",
-                name="exp_omg_sss",
+                name="upernet_beit-large_fp16_8x1_640x640_160k_ade20k",
             ),
         ),
     ],

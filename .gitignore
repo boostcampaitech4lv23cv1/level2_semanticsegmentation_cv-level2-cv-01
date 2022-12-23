@@ -309,3 +309,4 @@ wandb/
 mmsegmentation/work_dirs
 mmsegmentation/wandb
 mmsegmentation/artifacts
+mmsegmentation/pretrained

@@ -14,7 +14,7 @@ lr_config = dict(
 )
 
 # runtime settings
-runner = dict(type="EpochBasedRunner", max_epochs=40)
+runner = dict(type="EpochBasedRunner", max_epochs=100)
 checkpoint_config = dict(by_epoch=True, interval=10)
 evaluation = dict(
     interval=1,
