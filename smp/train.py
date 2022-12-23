@@ -49,9 +49,7 @@ def parse_args():
     parser.add_argument("--saved_dir", type=str, default="trained_models")
 
     # dataset path
-    parser.add_argument(
-        "--train_path", type=str, default="/opt/ml/input/data/val.json"
-    )
+    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/train.json")
     parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/val.json")
 
     # hyperparameters
@@ -78,9 +76,7 @@ def parse_args():
     # settings
     parser.add_argument("--seed", type=int, default=2022)
     parser.add_argument("--val_every", type=int, default=1)
-    parser.add_argument(
-        "--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu"
-    )
+    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
 
     # wandb
     parser.add_argument("--wandb_project", type=str, default="segmentation_practice")
