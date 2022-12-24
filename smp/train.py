@@ -13,7 +13,7 @@ from importlib import import_module
 import numpy as np
 from tqdm import tqdm
 
-from torch.optim.lr_scheduler import StepLR, MultiStepLR
+from torch.optim.lr_scheduler import StepLR, MultiStepLR, CosineAnnealingLR
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -39,8 +39,9 @@ def parse_args():
 
     # model
     parser.add_argument(
-        "--segmentation_model", type=str, default="Unet"
-    )  # [Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN]
+        "--segmentation_model", type=str, default="Unet", 
+        help='Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN'
+    )
     parser.add_argument("--encoder_name", type=str, default="resnet34")
     parser.add_argument("--encoder_weights", type=str, default="imagenet")
 
@@ -48,16 +49,15 @@ def parse_args():
     parser.add_argument("--saved_dir", type=str, default="trained_models")
 
     # dataset path
-    parser.add_argument(
-        "--train_path", type=str, default="/opt/ml/input/data/train.json"
-    )
+    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/train.json")
     parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/val.json")
 
     # hyperparameters
     parser.add_argument("--num_epochs", type=int, default=50)  # 20
     parser.add_argument(
-        "--criterion", type=str, default="CrossEntropyLoss"
-    )  # [CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss]
+        "--criterion", type=str, default="CrossEntropyLoss",
+        help='CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss'
+    )
     parser.add_argument("--learning_rate", type=float, default=1e-3)  # 1e-4
     parser.add_argument("--weight_decay", type=float, default=1e-6)
     parser.add_argument("--train_batch_size", type=int, default=16)
@@ -76,9 +76,7 @@ def parse_args():
     # settings
     parser.add_argument("--seed", type=int, default=2022)
     parser.add_argument("--val_every", type=int, default=1)
-    parser.add_argument(
-        "--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu"
-    )
+    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
 
     # wandb
     parser.add_argument("--wandb_project", type=str, default="segmentation_practice")
@@ -258,14 +256,13 @@ def train(args):
         lr=args.learning_rate,
         weight_decay=args.weight_decay,
     )
-    scheduler = MultiStepLR(optimizer, milestones=[args.num_epochs // 2], gamma=0.1)
+    scheduler = CosineAnnealingLR(optimizer, T_max=args.num_epochs, eta_min=0.)
 
     scaler = torch.cuda.amp.GradScaler()
 
     # Early Stopping 변수
     counter = 0
 
-    # print(f'Start training..')
     n_class = 11
     best_loss = 9999999
     best_mIoU = -999999
@@ -365,7 +362,6 @@ def train(args):
             # validation 주기에 따른 loss 출력 및 best model 저장
             if (epoch + 1) % args.val_every == 0:
 
-                # print(f'Start validation #{epoch + 1}')
                 model.eval()
 
                 with torch.no_grad():
@@ -417,7 +413,6 @@ def train(args):
                                 }
                             )
 
-                    # IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , sorted_df['Categories'])]
                     IoU_by_class = [
                         {classes: round(IoU, 4)}
                         for IoU, classes in zip(IoU, categories)
@@ -431,12 +426,13 @@ def train(args):
                     )
 
                     avrg_loss = total_loss.item() / cnt
-                    valid_log = "[EPOCH VALID {}/{}] : Valid Loss {} - Valid Accuracy {} - Valid mIoU {}".format(
+                    valid_log = '[EPOCH VALID {}/{}] : Valid Loss {} - Valid Accuracy {} - Valid mIoU {}\nIoU by class{}'.format(
                         epoch + 1,
                         args.num_epochs,
                         round(avrg_loss, 4),
                         round(acc, 4),
                         round(mIoU, 4),
+                        IoU_by_class
                     )
                     print(valid_log)
                     f.write(valid_log + "\n")
