@@ -192,10 +192,24 @@ def train(args):
     train_transform = A.Compose(
         [
             # A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256),
-            A.Resize(512, 512),
+            # A.Resize(512, 512),
             A.GridDropout(ratio=0.5),
-            A.HorizontalFlip(),
-            A.RandomRotate90(),
+            A.OneOf(
+                [
+                    A.HorizontalFlip(),
+                    A.VerticalFlip(),
+                    A.RandomRotate90(),
+                ],
+                p=1,
+            ),
+            A.OneOf(
+                [
+                    A.Blur(blur_limit=3),
+                    A.GaussianBlur(blur_limit=3),
+                    A.MedianBlur(blur_limit=3),
+                ],
+                p=0.5,
+            ),
             A.Normalize(
                 mean=[0.46009142, 0.43957697, 0.41827273],
                 std=[0.21060736, 0.20755924, 0.21633709],
@@ -279,7 +293,7 @@ def train(args):
         )
     elif args.scheduler == "CosineAnnealingLR":
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
-            optimizer=optimizer, T_max=10, eta_min=1e-8
+            optimizer=optimizer, T_max=15, eta_min=2e-8
         )
     elif args.scheduler == "OneCycleLR":
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
@@ -287,7 +301,7 @@ def train(args):
         )
     elif args.scheduler == "CosineAnnealingWarmRestarts":
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
-            optimizer=optimizer, T_0=10, T_mult=10
+            optimizer=optimizer, T_0=5, T_mult=1, eta_min=2e-8
         )
     scaler = torch.cuda.amp.GradScaler()
 
@@ -460,12 +474,13 @@ def train(args):
                     )
 
                     avrg_loss = total_loss.item() / cnt
-                    valid_log = "[EPOCH VALID {}/{}] : Valid Loss {} - Valid Accuracy {} - Valid mIoU {}".format(
+                    valid_log = "[EPOCH VALID {}/{}] : Valid Loss {} - Valid Accuracy {} - Valid mIoU {}\nIoU by class{}".format(
                         epoch + 1,
                         args.num_epochs,
                         round(avrg_loss, 4),
                         round(acc, 4),
                         round(mIoU, 4),
+                        IoU_by_class,
                     )
                     print(valid_log)
                     f.write(valid_log + "\n")
