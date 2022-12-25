@@ -303,6 +303,17 @@ def train(args):
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
             optimizer=optimizer, T_0=5, T_mult=1, eta_min=2e-8
         )
+    elif args.scheduler == "CyclicLR":
+        scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
+            optimizer=optimizer,
+            mode="triangular2",
+            base_lr=2e-8,
+            max_lr=1e-4,
+            step_size_up=5,
+            # gamma=0.5,
+            cycle_momentum=False,
+        )
+
     scaler = torch.cuda.amp.GradScaler()
 
     # Early Stopping 변수
