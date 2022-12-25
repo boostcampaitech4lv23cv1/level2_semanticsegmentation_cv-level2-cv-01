@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         "--model_path",
         type=str,
-        default="Unet_mit_b5_imagenet_CosineAnnealingWarmRestarts_DiceLoss_221223_234150",
+        default="Unet_mit_b5_imagenet_CosineAnnealingLR_DiceLoss_221225_013702",
     )
     parser.add_argument(
         "--metric", type=str, default="best_mIoU"

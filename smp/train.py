@@ -73,7 +73,7 @@ def parse_args():
 
     # early stopping
     parser.add_argument("--early_stop", type=bool, default=True)
-    parser.add_argument("--patience", type=int, default=7)
+    parser.add_argument("--patience", type=int, default=10)
 
     # settings
     parser.add_argument("--seed", type=int, default=2022)
@@ -293,7 +293,7 @@ def train(args):
         )
     elif args.scheduler == "CosineAnnealingLR":
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
-            optimizer=optimizer, T_max=15, eta_min=2e-8
+            optimizer=optimizer, T_max=5, eta_min=2e-8
         )
     elif args.scheduler == "OneCycleLR":
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
