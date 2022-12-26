@@ -198,10 +198,12 @@ def plot_examples(args):
         # mIoU 이미지 worst & best 저장
         sort_save(args.num_examples, result_by_class['mIoU'][:args.num_examples], args.base_dir, args.ckpt, legend_elements, 'mIoU_worst', args.data_dir)
         sort_save(args.num_examples, result_by_class['mIoU'][-args.num_examples:], args.base_dir, args.ckpt, legend_elements, 'mIoU_best', args.data_dir)
+        print('mIoU images are saved')
 
         # 클래스별 IoU 이미지 저장
         for k in category_names:
             sort_save(args.num_examples, result_by_class[k][:args.num_examples], args.base_dir, args.ckpt, legend_elements, k, args.data_dir)
+            print(f'a {k} image is saved')
 
     else:
         result = []
