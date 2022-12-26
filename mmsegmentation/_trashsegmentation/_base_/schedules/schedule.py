@@ -14,10 +14,10 @@ lr_config = dict(
 )
 
 # runtime settings
-runner = dict(type="EpochBasedRunner", max_epochs=100)
+runner = dict(type="IterBasedRunner", max_iters=80000)
 checkpoint_config = dict(by_epoch=True, interval=10)
 evaluation = dict(
-    interval=1,
+    interval=5000,
     metric="mIoU",
     save_best="mIoU",
     classwise=True,
