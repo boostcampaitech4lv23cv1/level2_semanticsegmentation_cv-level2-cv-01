@@ -160,7 +160,7 @@ def train(args):
     })
 
     train_transform = A.Compose([
-                                A.HorizontalFlip(p=0.5),
+                                A.RandomShadow (shadow_roi=(0, 0.5, 1, 1), num_shadows_lower=1, num_shadows_upper=2, shadow_dimension=5, p=0.5),
                                 A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
                                            max_pixel_value=1.0),
                                 ToTensorV2()
