@@ -59,7 +59,7 @@ def sort_save(num_examples, result, base_dir, ckpt, legend_elements, add_name, d
 
         # transformed Image
         ax[i][1].imshow(imgs.transpose([1,2,0]).astype('uint8'))
-        ax[i][1].set_title(f"Orignal Image : {image_infos}\n {add_name if 'mIoU' in add_name else add_name+'_IoU'}: {score}")
+        ax[i][1].set_title(f"Transformed Image : {image_infos}")
             
         # Groud Truth
         ax[i][2].imshow(label_to_color_image(masks).astype('uint8'))
