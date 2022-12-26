@@ -1,8 +1,4 @@
-from pytz import timezone
-from datetime import datetime
-
 exp_name = "Swin+UPerNet"
-start_time = datetime.now(timezone("Asia/Seoul")).strftime("_%y%m%d_%H%M%S")
 
 # yapf:disable
 log_config = dict(
@@ -15,7 +11,7 @@ log_config = dict(
             init_kwargs=dict(
                 entity="kidsarebornstars",
                 project="segmentation",
-                name=f"{exp_name}+{start_time}",
+                name=f"{exp_name}",
             ),
         ),
     ],

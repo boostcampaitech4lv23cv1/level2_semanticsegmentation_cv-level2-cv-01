@@ -1,4 +1,4 @@
-checkpoint_file = "../weights/swin_tiny.pth"
+checkpoint_file = "./weights/swin_tiny.pth"
 
 # model settings
 norm_cfg = dict(type="SyncBN", requires_grad=True)
