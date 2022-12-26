@@ -62,7 +62,7 @@ def parse_args():
     parser.add_argument("--weight_decay", type=float, default=1e-6)
     parser.add_argument("--train_batch_size", type=int, default=16)
     parser.add_argument("--valid_batch_size", type=int, default=16)
-    parser.add_argument("--optimizer", type=str, default="Adam")
+    parser.add_argument("--optimizer", type=str, default="AdamW")
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument(
         "--scheduler", type=str, default="CosineAnnealingLR"
@@ -198,18 +198,18 @@ def train(args):
                 [
                     A.HorizontalFlip(),
                     A.VerticalFlip(),
-                    A.RandomRotate90(),
                 ],
                 p=1,
             ),
-            A.OneOf(
-                [
-                    A.Blur(blur_limit=3),
-                    A.GaussianBlur(blur_limit=3),
-                    A.MedianBlur(blur_limit=3),
-                ],
-                p=0.5,
-            ),
+            # A.OneOf(
+            #     [
+            #         A.Blur(blur_limit=3),
+            #         A.GaussianBlur(blur_limit=3),
+            #         A.MedianBlur(blur_limit=3),
+            #     ],
+            #     p=0.5,
+            # ),
+            A.RandomBrightnessContrast(),
             A.Normalize(
                 mean=[0.46009142, 0.43957697, 0.41827273],
                 std=[0.21060736, 0.20755924, 0.21633709],
@@ -263,6 +263,7 @@ def train(args):
     )
     model = model_module(
         encoder_name=args.encoder_name,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        encoder_output_stride=32,
         encoder_weights=args.encoder_weights,  # use `imagenet` pre-trained weights for encoder initialization
         in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=11,  # model output channels (number of classes in your dataset)
@@ -293,7 +294,7 @@ def train(args):
         )
     elif args.scheduler == "CosineAnnealingLR":
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(
-            optimizer=optimizer, T_max=5, eta_min=2e-8
+            optimizer=optimizer, T_max=35, eta_min=2e-8
         )
     elif args.scheduler == "OneCycleLR":
         scheduler = getattr(import_module("torch.optim.lr_scheduler"), args.scheduler)(

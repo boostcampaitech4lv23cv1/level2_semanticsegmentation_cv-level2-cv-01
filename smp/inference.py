@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         "--model_path",
         type=str,
-        default="Unet_mit_b5_imagenet_CyclicLR_CrossEntropyLoss_221225_164752",
+        default="PAN_mit_b5_imagenet_CosineAnnealingLR_CrossEntropyLoss_221226_110720",
     )
     parser.add_argument(
         "--metric", type=str, default="best_mIoU"
@@ -75,6 +75,7 @@ def test(args):
     model_module = getattr(import_module("segmentation_models_pytorch"), model_name)
     model = model_module(
         encoder_name=encoder_name,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        encoder_output_stride=32,
         encoder_weights=None,  # use `imagenet` pre-trained weights for encoder initialization
         in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=11,  # model output channels (number of classes in your dataset)
