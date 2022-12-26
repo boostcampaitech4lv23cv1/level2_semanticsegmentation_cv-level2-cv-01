@@ -80,7 +80,7 @@ def parse_args():
 
     # wandb
     parser.add_argument("--wandb_project", type=str, default="segmentation_practice")
-    parser.add_argument("--wandb_entity", type=str, default="myeongheonchoi")
+    parser.add_argument("--wandb_entity", type=str, default="cv_1")
     parser.add_argument("--wandb_run", type=str, default="exp")
 
     args = parser.parse_args()
