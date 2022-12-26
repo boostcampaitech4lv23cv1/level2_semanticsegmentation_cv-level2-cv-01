@@ -310,3 +310,5 @@ mmsegmentation/work_dirs
 mmsegmentation/wandb
 mmsegmentation/artifacts
 mmsegmentation/pretrained
+mmsegmentation/_trashsegmentation/weights
+ViT-Adapter/segmentation/work_dirs/

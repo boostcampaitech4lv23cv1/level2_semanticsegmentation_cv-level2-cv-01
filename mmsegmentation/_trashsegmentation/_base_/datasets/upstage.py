@@ -32,7 +32,9 @@ palette = [
 
 # set normalize value
 img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True
+    mean=[106.75155, 112.0744, 117.308105],
+    std=[55.02122, 52.830025, 53.688778],
+    to_rgb=True,
 )
 crop_size = (512, 512)
 train_pipeline = [
@@ -128,7 +130,7 @@ data = dict(
         img_dir=data_root + "test",
         pipeline=test_pipeline,
     ),
-    train_dataloader=dict(samples_per_gpu=32, workers_per_gpu=4, shuffle=True),
+    train_dataloader=dict(samples_per_gpu=8, workers_per_gpu=4, shuffle=True),
     val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
 )
