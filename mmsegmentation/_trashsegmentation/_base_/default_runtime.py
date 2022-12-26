@@ -1,3 +1,9 @@
+from pytz import timezone
+from datetime import datetime
+
+exp_name = "Swin+UPerNet"
+start_time = datetime.now(timezone("Asia/Seoul")).strftime("_%y%m%d_%H%M%S")
+
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -9,7 +15,7 @@ log_config = dict(
             init_kwargs=dict(
                 entity="kidsarebornstars",
                 project="segmentation",
-                name="upernet_beit-large_fp16_8x1_640x640_160k_ade20k",
+                name=f"{exp_name}+{start_time}",
             ),
         ),
     ],
@@ -19,5 +25,10 @@ dist_params = dict(backend="nccl")
 log_level = "INFO"
 load_from = None
 resume_from = None
-workflow = [("train", 1)]
+workflow = [("train", 1), ("val", 1)]
+opencv_num_threads = 0
+mp_start_method = "fork"
 cudnn_benchmark = True
+
+seed = 2022
+gpu_ids = 0
