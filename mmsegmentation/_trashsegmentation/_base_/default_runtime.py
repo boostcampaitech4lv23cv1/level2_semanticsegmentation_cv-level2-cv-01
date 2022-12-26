@@ -11,7 +11,7 @@ log_config = dict(
         dict(type="TextLoggerHook", by_epoch=False),
         dict(
             type="WandbLoggerHook",
-            interval=1000,
+            interval=50,
             init_kwargs=dict(
                 entity="kidsarebornstars",
                 project="segmentation",
