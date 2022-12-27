@@ -74,3 +74,54 @@ def _fast_hist(label_true, label_pred, n_class):
 #     freq = hist.sum(axis=1) / hist.sum()
 #     fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
 #     return acc, acc_cls, mean_iu, fwavacc, iu
+
+
+def create_trash_label_colormap():
+    """Creates a label colormap used in Trash segmentation.
+    Returns:
+        A colormap for visualizing segmentation results.
+    """
+    class_colormap = (
+        ('Backgroud', 0, 0, 0),
+        ('General trash', 192, 0, 128),
+        ('Paper', 0, 128, 192),
+        ('Paper pack', 0, 128, 64),
+        ('Metal', 128, 0, 0),
+        ('Glass', 64, 0, 128),
+        ('Platic', 64, 0, 192),
+        ('Styrofoam', 192, 128, 64),
+        ('Plastic bag', 192, 192, 128),
+        ('Battery', 64, 64, 128),
+        ('Clothing', 128, 0, 192)
+    )
+    colormap = np.zeros((11, 3), dtype=np.uint8)
+    for inex, (_, r, g, b) in enumerate(class_colormap):
+        colormap[inex] = [r, g, b]
+    
+    return colormap
+
+def label_to_color_image(label):
+    """Adds color defined by the dataset colormap to the label.
+
+    Args:
+        label: A 2D array with integer type, storing the segmentation label.
+
+    Returns:
+        result: A 2D array with floating type. The element of the array
+                is the color indexed by the corresponding element in the input label
+                to the trash color map.
+
+    Raises:
+        ValueError: If label is not of rank 2 or its value is larger than color
+              map maximum entry.
+    """
+    if label.ndim != 2:
+        raise ValueError('Expect 2-D input label')
+
+    colormap = create_trash_label_colormap()
+
+    if np.max(label) >= len(colormap):
+        raise ValueError('label value too large.')
+
+    return colormap[label]
+
