@@ -37,4 +37,5 @@ evaluation = dict(
     metric="mIoU",
     save_best="mIoU",
     classwise=True,
+    pre_eval=True,
 )
