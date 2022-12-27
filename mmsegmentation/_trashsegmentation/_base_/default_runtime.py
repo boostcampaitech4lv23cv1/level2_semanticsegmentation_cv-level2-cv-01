@@ -1,20 +1,20 @@
-exp_name = "Swin+UPerNet"
+exp_name = "Mask2Former + VitAdapter"
 seed = 2022
 gpu_ids = 0
 
 # yapf:disable
 log_config = dict(
-    interval=50,
+    interval=500,
     hooks=[
         dict(type="TextLoggerHook", by_epoch=False),
         dict(
             type="MMSegWandbHook",
-            interval=50,
+            interval=500,
             with_step=False,
             init_kwargs=dict(
                 entity="kidsarebornstars",
                 project="segmentation",
-                name=f"{exp_name}_resume",
+                name=f"{exp_name}",
             ),
         ),
     ],

@@ -17,7 +17,7 @@ lr_config = dict(
 runner = dict(type="IterBasedRunner", max_iters=80000)
 checkpoint_config = dict(by_epoch=False, interval=10000)
 evaluation = dict(
-    interval=5000,
+    interval=10000,
     metric="mIoU",
     save_best="mIoU",
     classwise=True,
