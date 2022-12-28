@@ -1,4 +1,4 @@
-exp_name = "Swin+UPerNet"
+exp_name = "OCRnet_HRNetV2_48_voc12aug"
 seed = 2022
 gpu_ids = 0
 
@@ -8,12 +8,13 @@ log_config = dict(
     hooks=[
         dict(type="TextLoggerHook", by_epoch=False),
         dict(
-            type="WandbLoggerHook",
+            type="MMSegWandbHook",
             interval=50,
+            with_step=False,
             init_kwargs=dict(
-                entity="kidsarebornstars",
-                project="segmentation",
-                name=f"{exp_name}_resume",
+                entity="myeongheonchoi",
+                project="segmentation_practice",
+                name=exp_name,
             ),
         ),
     ],

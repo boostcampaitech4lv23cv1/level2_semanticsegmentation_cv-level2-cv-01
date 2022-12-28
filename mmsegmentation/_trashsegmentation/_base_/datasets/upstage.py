@@ -32,27 +32,39 @@ palette = [
 
 # set normalize value
 img_norm_cfg = dict(
-    mean=[106.75155, 112.0744, 117.308105],
-    std=[55.02122, 52.830025, 53.688778],
+    mean=[0.46009142*255, 0.43957697*255, 0.41827273*255],
+    std=[0.21060736*255, 0.20755924*255, 0.21633709*255],
     to_rgb=True,
 )
-crop_size = (512, 512)
+crop_size = (1024, 1024)
+# train_pipeline = [
+#     dict(type="LoadImageFromFile"),
+#     dict(type="LoadAnnotations"),
+#     # dict(
+#     #     type='RandomMosaic',
+#     #     prob = 0.5,
+#     #     img_scale = (512,512),
+#     #     pad_val=114),
+#     dict(type="Resize", img_scale=(512, 512), ratio_range=(0.5, 2.0)),
+#     # dict(type="RandomCrop", crop_size=crop_size, cat_max_ratio=0.75),
+#     dict(type="RandomFlip", prob=0.5),
+#     dict(type="PhotoMetricDistortion"),
+#     dict(type="Normalize", **img_norm_cfg),
+#     # dict(type="Pad", size=crop_size, pad_val=0, seg_pad_val=255),
+#     dict(type="DefaultFormatBundle"),
+#     dict(type="Collect", keys=["img", "gt_semantic_seg"]),
+# ]
 train_pipeline = [
-    dict(type="LoadImageFromFile"),
-    dict(type="LoadAnnotations"),
-    # dict(
-    #     type='RandomMosaic',
-    #     prob = 0.5,
-    #     img_scale = (512,512),
-    #     pad_val=114),
-    dict(type="Resize", img_scale=(512, 512), ratio_range=(0.5, 2.0)),
-    dict(type="RandomCrop", crop_size=crop_size, cat_max_ratio=0.75),
-    dict(type="RandomFlip", prob=0.5),
-    dict(type="PhotoMetricDistortion"),
-    dict(type="Normalize", **img_norm_cfg),
-    dict(type="Pad", size=crop_size, pad_val=0, seg_pad_val=255),
-    dict(type="DefaultFormatBundle"),
-    dict(type="Collect", keys=["img", "gt_semantic_seg"]),
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations'),
+    dict(type='Resize', img_scale=(1024, 1024), ratio_range=(0.5, 2.0)),
+    dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
+    dict(type='RandomFlip', prob=0.5),
+    dict(type='PhotoMetricDistortion'),
+    dict(type='Normalize', **img_norm_cfg),
+    dict(type='Pad', size=crop_size, pad_val=0, seg_pad_val=255),
+    dict(type='DefaultFormatBundle'),
+    dict(type='Collect', keys=['img', 'gt_semantic_seg']),
 ]
 
 # random mosaic 적용
@@ -74,7 +86,7 @@ valid_pipeline = [
     dict(type="LoadImageFromFile"),
     dict(
         type="MultiScaleFlipAug",
-        img_scale=(512, 512),
+        img_scale=(1024, 1024),
         flip=False,
         transforms=[
             dict(type="Resize", keep_ratio=True),
@@ -89,7 +101,7 @@ test_pipeline = [
     dict(type="LoadImageFromFile"),
     dict(
         type="MultiScaleFlipAug",
-        img_scale=(512, 512),
+        img_scale=(1024, 1024),
         flip=False,
         flip_direction=["horizontal", "vertical"],
         transforms=[
@@ -130,7 +142,7 @@ data = dict(
         img_dir=data_root + "test",
         pipeline=test_pipeline,
     ),
-    train_dataloader=dict(samples_per_gpu=8, workers_per_gpu=4, shuffle=True),
+    train_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=True),
     val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
 )
