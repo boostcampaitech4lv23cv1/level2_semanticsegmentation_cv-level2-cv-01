@@ -160,7 +160,17 @@ def train(args):
     })
 
     train_transform = A.Compose([
-                                A.RandomShadow (shadow_roi=(0, 0.5, 1, 1), num_shadows_lower=1, num_shadows_upper=2, shadow_dimension=5, p=0.5),
+                                ###### soft #####
+                                # A.VerticalFlip(p=0.5),
+                                # A.HorizontalFlip(p=0.5),
+                                # A.augmentations.crops.transforms.CropNonEmptyMaskIfExists (256, 256, ignore_values=[[0,0,0]], p=0.5),
+                                # A.Resize(512, 512), ## CropNonEmptyMaskIfExists 진행 시에 같이 해줘야함.
+                                # A.RandomRotate90(),
+                                # A.GridDropout(ratio=0.2, random_offset= True, holes_number_x=4, holes_number_y=4,p=0.5),
+                                ###### pixel ######
+                                # A.RandomBrightnessContrast(brightness_limit=(-0.3, 0.3), contrast_limit=(-0.3, 0.3), p=0.5),
+                                # A.RandomGridShuffle(grid=(3, 3), p=0.5),
+                                # A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=0.5),
                                 A.Normalize(mean=[0.46009142, 0.43957697, 0.41827273], std=[0.21060736, 0.20755924, 0.21633709],
                                            max_pixel_value=1.0),
                                 ToTensorV2()
