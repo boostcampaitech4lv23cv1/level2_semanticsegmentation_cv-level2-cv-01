@@ -41,24 +41,6 @@ train_pipeline = [
     dict(type="Resize", img_scale=(512, 512), ratio_range=(0.5, 2.0)),
     dict(type="RandomCrop", crop_size=crop_size, cat_max_ratio=0.75),
     dict(type="RandomFlip", prob=0.5),
-    dict(
-        type="Albu",
-        transforms=[
-            dict(type="ToGray"),
-            dict(
-                type="RandomBrightnessContrast",
-                brightness_limit=[-0.3, 0.3],
-                contrast_limit=[-0.3, 0.3],
-                p=0.2,
-            ),
-            dict(
-                type="CLAHE",
-                clip_limit=40.0,
-            ),
-        ],
-        keymap=dict(img="image", gt_semantic_seg="mask"),
-        update_pad_shape=False,
-    ),
     dict(type="PhotoMetricDistortion"),
     dict(type="Normalize", **img_norm_cfg),
     dict(type="Pad", size=crop_size, pad_val=0, seg_pad_val=255),
