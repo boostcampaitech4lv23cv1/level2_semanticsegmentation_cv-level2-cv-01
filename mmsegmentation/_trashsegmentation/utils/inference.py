@@ -23,16 +23,16 @@ def parse_args():
     parser.add_argument(
         "--config_path",
         type=str,
-        default="./work_dirs/segformer_mit-b5_512x512_160k_ade20k/segformer_mit-b5_512x512_160k_ade20k.py",
+        default="./work_dirs/segformer_mit-b5_8x1_1024x1024_160k_cityscapes/segformer_mit-b5_8x1_1024x1024_160k_cityscapes.py",
     )
     parser.add_argument(
         "--test_images_path", type=str, default="/opt/ml/input/data/mmseg/images/test"
     )
-    parser.add_argument("--iter", type=str, default="best_mIoU_epoch_52")
+    parser.add_argument("--iter", type=str, default="iter_96000")
     parser.add_argument(
         "--work_dir",
         type=str,
-        default="./work_dirs/segformer_mit-b5_512x512_160k_ade20k",
+        default="./work_dirs/segformer_mit-b5_8x1_1024x1024_160k_cityscapes",
     )
     args = parser.parse_args()
     return args
