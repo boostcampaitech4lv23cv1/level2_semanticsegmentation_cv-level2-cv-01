@@ -17,5 +17,5 @@ lr_config = dict(
 runner = dict(type="EpochBasedRunner", max_epochs=100)
 checkpoint_config = dict(by_epoch=True, interval=10)
 evaluation = dict(
-    interval=1, metric="mIoU", save_best="mIoU", classwise=True, pre_eval=True
+    interval=5, metric="mIoU", save_best="mIoU", classwise=True, pre_eval=True
 )
