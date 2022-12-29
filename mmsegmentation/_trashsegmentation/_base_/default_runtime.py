@@ -1,15 +1,18 @@
+exp_name = "MODELNAME"
+
 # yapf:disable
 log_config = dict(
     interval=50,
     hooks=[
         dict(type="TextLoggerHook", by_epoch=False),
         dict(
-            type="WandbLoggerHook",
-            interval=1000,
+            type="MMSegWandbHook",
+            interval=50,
+            with_step=False,
             init_kwargs=dict(
-                entity="kidsarebornstars",
-                project="segmentation",
-                name="upernet_beit-large_fp16_8x1_640x640_160k_ade20k",
+                entity="quasar529",
+                project="Semantic_Segmentation",
+                name=f"{exp_name}",
             ),
         ),
     ],
@@ -19,5 +22,10 @@ dist_params = dict(backend="nccl")
 log_level = "INFO"
 load_from = None
 resume_from = None
-workflow = [("train", 1)]
+workflow = [("train", 1), ("val", 1)]
+opencv_num_threads = 0
+mp_start_method = "fork"
 cudnn_benchmark = True
+
+seed = 2022
+gpu_ids = 0
