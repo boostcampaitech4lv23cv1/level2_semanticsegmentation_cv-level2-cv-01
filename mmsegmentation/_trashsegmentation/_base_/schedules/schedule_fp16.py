@@ -14,8 +14,10 @@ optimizer = dict(
         }
     ),
 )
-optimizer_config = dict()
-
+optimizer_config = dict(
+    type="Fp16OptimizerHook", loss_scale=512.0, grad_clip=dict(max_norm=35, norm_type=2)
+)  # apply fp16
+fp16 = dict()
 
 # learning policy
 lr_config = dict(

@@ -34,7 +34,7 @@ palette = [
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True
 )
-crop_size = (896, 896)
+crop_size = (512, 512)
 train_pipeline = [
     dict(type="LoadImageFromFile"),
     dict(type="LoadAnnotations"),
@@ -43,7 +43,7 @@ train_pipeline = [
     #     prob = 0.5,
     #     img_scale = (512,512),
     #     pad_val=114),
-    dict(type="Resize", img_scale=(2048, 1024), ratio_range=(0.5, 2.0)),
+    dict(type="Resize", img_scale=(512, 512), ratio_range=(0.5, 2.0)),
     dict(type="RandomCrop", crop_size=crop_size, cat_max_ratio=0.75),
     dict(type="RandomFlip", prob=0.5),
     dict(type="PhotoMetricDistortion"),
@@ -72,7 +72,7 @@ valid_pipeline = [
     dict(type="LoadImageFromFile"),
     dict(
         type="MultiScaleFlipAug",
-        img_scale=(2048, 1024),
+        img_scale=(512, 512),
         flip=False,
         transforms=[
             dict(type="Resize", keep_ratio=True),
@@ -87,7 +87,7 @@ test_pipeline = [
     dict(type="LoadImageFromFile"),
     dict(
         type="MultiScaleFlipAug",
-        img_scale=(2048, 1024),
+        img_scale=(512, 512),
         flip=False,
         flip_direction=["horizontal", "vertical"],
         transforms=[
@@ -102,8 +102,6 @@ test_pipeline = [
 
 
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
     train=dict(
         classes=classes,
         palette=palette,
@@ -127,9 +125,10 @@ data = dict(
         palette=palette,
         type=dataset_type,
         reduce_zero_label=False,
-        img_dir=data_root + "test",
+        img_dir=data_root + "images/test",
         pipeline=test_pipeline,
     ),
-    val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=2, shuffle=False),
-    test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=2, shuffle=False),
+    train_dataloader=dict(samples_per_gpu=32, workers_per_gpu=4, shuffle=True),
+    val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
+    test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
 )
