@@ -235,10 +235,10 @@ def train(args):
                     if args.mixup:
                         images, masks = Mixup(images, masks, alpha=args.alpha)
 
-                    images = torch.stack(images)
-                    masks = torch.stack(masks).long()
+                    images = torch.stack(images).to(device)
+                    masks = torch.stack(masks).long().to(device)
 
-                    images, masks = images.to(device), masks.to(device)
+                    #images, masks = images.to(device), masks.to(device)
                     model = model.to(device)
 
                     with torch.cuda.amp.autocast():
@@ -292,15 +292,12 @@ def train(args):
                 }
             )
 
-            save_model(model, saved_dir, "latest.pt")
-
             # validation 주기에 따른 loss 출력 및 best model 저장
             if (epoch + 1) % args.val_every == 0:
 
                 model.eval()
 
                 with torch.no_grad():
-                    n_class = 11
                     total_loss = 0
                     cnt = 0
 
@@ -315,10 +312,10 @@ def train(args):
                                 f"[Valid] Epoch [{epoch+1}/{args.num_epochs}]"
                             )
 
-                            images = torch.stack(images)
-                            masks = torch.stack(masks).long()
+                            images = torch.stack(images).to(device)
+                            masks = torch.stack(masks).long().to(device)
 
-                            images, masks = images.to(device), masks.to(device)
+                            #images, masks = images.to(device), masks.to(device)
 
                             # device 할당
                             model = model.to(device)
@@ -385,6 +382,9 @@ def train(args):
                             ),
                         }
                     )
+                
+                save_model(model, saved_dir, "latest.pt")
+
                 if epoch > 25:
                     save_model(model, saved_dir, f"epoch_{epoch+1}.pt")
 

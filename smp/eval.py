@@ -10,6 +10,7 @@ from collections import defaultdict
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from segmentation_models_pytorch.encoders import get_preprocessing_fn
 
 import webcolors
 import matplotlib.pyplot as plt
@@ -19,7 +20,7 @@ plt.rcParams['axes.grid'] = False
 from importlib import import_module
 from argparse import ArgumentParser
 
-from dataset import CustomDataLoader
+from dataset import CustomDataLoader, get_transform
 from utils import label_accuracy_score, add_hist, create_trash_label_colormap, label_to_color_image
 
 
@@ -28,10 +29,10 @@ def parse_args():
     
     # 위에 세개만 지정해주고 실행하면 됨
     parser.add_argument('--anno_dir', type=str, default='/opt/ml/input/data/val.json') # 시각화할 데이터셋 anno(train, val, test중 하나는 반드시 json 이름에 포함돼 있어야함)
-    parser.add_argument('--base_dir', type=str, default='/opt/ml/input/level2_semanticsegmentation_cv-level2-cv-01/smp/trained_models/FPN_mit_b4_AdamW_221225_091349')
-    parser.add_argument('--ckpt', type=str, default='latest.pt') # 사용할 pt 명
+    parser.add_argument('--base_dir', type=str, default='/opt/ml/input/level2_semanticsegmentation_cv-level2-cv-01/smp/trained_models/FPN_mit_b4_aug_221231_043400')
+    parser.add_argument('--ckpt', type=str, default='best_mIoU.pt') # 사용할 pt 명
     
-    parser.add_argument('--num_examples', type=int, default=16) # 확인할 이미지 개수
+    parser.add_argument('--num_examples', type=int, default=50) # 확인할 이미지 개수
     parser.add_argument('--data_dir', type=str, default='/opt/ml/input/data') # 이미지 불러올 때 사용
     parser.add_argument('--mode', type=str, default='train') # 따로 설정할 필요 없습니다(anno_dir에서 가져와요)
 
@@ -114,6 +115,7 @@ def plot_examples(args):
     config = json.load(open(os.path.join(args.base_dir,'config.json')))
     segmentation_model = config['segmentation_model']
     encoder_name = config['encoder_name']
+    encoder_weights = config['encoder_weights']
 
     # GPU 사용 가능 여부에 따라 device 정보 저장
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -125,14 +127,20 @@ def plot_examples(args):
                              label=category) for category, rgb in category_and_rgb]
 
     
-    transform = A.Compose([
-                        A.Normalize(
-                                mean=[0.46009142, 0.43957697, 0.41827273],
-                                std=[0.21060736, 0.20755924, 0.21633709],
-                                max_pixel_value=1.0,
-                            ),
-                        ToTensorV2()
-                        ])
+    # --model
+    model_module = getattr(import_module("segmentation_models_pytorch"), segmentation_model)
+    model = model_module(
+        encoder_name=encoder_name,
+        #encoder_weights=encoder_weights,
+        in_channels=3,                        
+        classes=11,                           
+    )
+    preprocessing_fn = get_preprocessing_fn(encoder_name, encoder_weights)
+    state_dict = load_model(model, os.path.join(args.base_dir, args.ckpt), device)
+    model.load_state_dict(state_dict)
+
+    # --dataset
+    transform = get_transform(mode='valid', preprocessing_fn=preprocessing_fn)
     
     dataset = CustomDataLoader(data_dir=args.anno_dir, mode=args.mode, transform=transform)
     dataloader = torch.utils.data.DataLoader(dataset=dataset, 
@@ -140,16 +148,6 @@ def plot_examples(args):
                                            shuffle=True,
                                            num_workers=4,
                                            collate_fn=collate_fn)
-
-    model_module = getattr(import_module("segmentation_models_pytorch"), segmentation_model)
-    model = model_module(
-        encoder_name=encoder_name,
-        in_channels=3,                        
-        classes=11,                           
-    )
-    state_dict = load_model(model, os.path.join(args.base_dir, args.ckpt), device)
-    model.load_state_dict(state_dict)
-
     
     # test / validation set에 대한 시각화
     n_class = 11
