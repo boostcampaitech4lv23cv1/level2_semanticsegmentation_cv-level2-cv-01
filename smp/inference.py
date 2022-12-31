@@ -19,6 +19,7 @@ from albumentations.pytorch import ToTensorV2
 from argparse import ArgumentParser
 
 import segmentation_models_pytorch as smp
+from segmentation_models_pytorch.encoders import get_preprocessing_fn
 
 from dataset import *
 
@@ -28,10 +29,10 @@ def parse_args():
 
     # model
     parser.add_argument(
-        "--model_path", type=str, default="UnetPlusPlus_xception_221220_195925"
+        "--model_path", type=str, default="PAN_mit_b4_aug_221231_151543"
     )
     parser.add_argument(
-        "--metric", type=str, default="best_mIoU"
+        "--metric", type=str, default="epoch_45"
     )  # ['best_mIoU', 'best_loss', 'latest']
 
     # path
@@ -70,31 +71,23 @@ def test(args):
 
     model_name = cfg["segmentation_model"]
     encoder_name = cfg["encoder_name"]
+    encoder_weights = cfg['encoder_weights']
 
     model_module = getattr(import_module("segmentation_models_pytorch"), model_name)
     model = model_module(
-        encoder_name=encoder_name,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights=None,  # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=11,  # model output channels (number of classes in your dataset)
+        encoder_name=encoder_name,
+        encoder_weights=encoder_weights,
+        in_channels=3,
+        classes=11,
+        encoder_output_stride=32,
     )
+    preprocessing_fn = get_preprocessing_fn(encoder_name, encoder_weights)
+    test_transform = get_transform(mode='test', preprocessing_fn=preprocessing_fn)
 
     ckpt = torch.load(os.path.join(model_dir, args.metric + ".pt"), map_location=device)
     model.load_state_dict(ckpt["net"])
     model = model.to(device)
 
-    input_size = args.input_size
-    test_transform = A.Compose(
-        [
-            A.Normalize(
-                mean=[0.46009142, 0.43957697, 0.41827273],
-                std=[0.21060736, 0.20755924, 0.21633709],
-                max_pixel_value=1.0,
-            ),
-            # A.Resize(input_size, input_size),
-            ToTensorV2(),
-        ]
-    )
     test_dataset = CustomDataLoader(
         data_dir=args.test_path, mode="test", transform=test_transform
     )

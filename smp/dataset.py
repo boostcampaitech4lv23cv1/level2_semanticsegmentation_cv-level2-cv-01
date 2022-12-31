@@ -41,13 +41,17 @@ def get_transform(mode='train', preprocessing_fn=None):
             A.GridDropout(ratio=0.2, random_offset=True, holes_number_x=4, holes_number_y=4, p=0.1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
+            A.OneOf([
+                A.ShiftScaleRotate(p=0.2, shift_limit=0.2, scale_limit=0.2, rotate_limit=45),
+                A.RandomRotate90(),
+            ], p=0.2),
+            #A.RandomRotate90(),
 
             # style
-            #A.OneOf([
-            #    A.ShiftScaleRotate(),
-            #    A.RandomRotate90(),
-            #], p=0.5),
-            A.RandomRotate90(),
+            A.OneOf([
+                A.ChannelShuffle(),
+                A.ToGray(),
+            ],p=0.2),
             A.RandomBrightnessContrast(p=0.5),
             
         ]

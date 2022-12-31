@@ -193,7 +193,7 @@ def train(args):
     )
     #scheduler = CosineAnnealingLR(optimizer, T_max=args.num_epochs, eta_min=0.)
     #scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=6, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.6)
-    scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=5, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.6)
+    scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=5, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.4)
 
     scaler = torch.cuda.amp.GradScaler()
 
