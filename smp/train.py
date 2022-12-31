@@ -36,7 +36,7 @@ def parse_args():
 
     # model
     parser.add_argument(
-        "--segmentation_model", type=str, default="FPN", 
+        "--segmentation_model", type=str, default="PAN", 
         help='Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN'
     )
     parser.add_argument("--encoder_name", type=str, default="mit_b4")
@@ -141,6 +141,7 @@ def train(args):
         encoder_weights=args.encoder_weights,  # use `imagenet` pre-trained weights for encoder initialization
         in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=11,  # model output channels (number of classes in your dataset)
+        encoder_output_stride=32,
     )
     preprocessing_fn = get_preprocessing_fn(args.encoder_name, args.encoder_weights)
     
@@ -191,7 +192,8 @@ def train(args):
         weight_decay=args.weight_decay,
     )
     #scheduler = CosineAnnealingLR(optimizer, T_max=args.num_epochs, eta_min=0.)
-    scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=6, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.6)
+    #scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=6, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.6)
+    scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=5, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.6)
 
     scaler = torch.cuda.amp.GradScaler()
 
