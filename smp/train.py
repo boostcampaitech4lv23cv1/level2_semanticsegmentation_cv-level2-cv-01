@@ -386,8 +386,9 @@ def train(args):
                     )
                 
                 save_model(model, saved_dir, "latest.pt")
-
-                if epoch > 25:
+                
+                # 50 이상인 5의 배수마다 ckpt 저장
+                if epoch + 1 > 50 and (epoch + 1)%5 == 0:
                     save_model(model, saved_dir, f"epoch_{epoch+1}.pt")
 
                 if avrg_loss < best_loss:
