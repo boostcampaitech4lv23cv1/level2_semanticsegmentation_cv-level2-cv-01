@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument("--saved_dir", type=str, default="trained_models")
 
     # dataset path
-    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/train_sorted.json")
+    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/train_sorted_gentrash_100.json")
     parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/val_sorted.json")
 
     # hyperparameters
@@ -388,7 +388,7 @@ def train(args):
                 save_model(model, saved_dir, "latest.pt")
                 
                 # 50 이상인 5의 배수마다 ckpt 저장
-                if epoch + 1 > 50 and (epoch + 1)%5 == 0:
+                if epoch + 1 > 45 and (epoch + 1)%5 == 0:
                     save_model(model, saved_dir, f"epoch_{epoch+1}.pt")
 
                 if avrg_loss < best_loss:

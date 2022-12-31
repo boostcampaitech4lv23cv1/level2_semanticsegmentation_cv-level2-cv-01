@@ -28,9 +28,9 @@ def parse_args():
     parser = ArgumentParser()
     
     # 위에 세개만 지정해주고 실행하면 됨
-    parser.add_argument('--anno_dir', type=str, default='/opt/ml/input/data/test.json') # 시각화할 데이터셋 anno(train, val, test중 하나는 반드시 json 이름에 포함돼 있어야함)
-    parser.add_argument('--base_dir', type=str, default='/opt/ml/input/level2_semanticsegmentation_cv-level2-cv-01/smp/trained_models/FPN_mit_b4_aug_221231_043400')
-    parser.add_argument('--ckpt', type=str, default='best_mIoU.pt') # 사용할 pt 명
+    parser.add_argument('--anno_dir', type=str, default='/opt/ml/input/data/train_sorted_gentrash_100.json') # 시각화할 데이터셋 anno(train, val, test중 하나는 반드시 json 이름에 포함돼 있어야함)
+    parser.add_argument('--base_dir', type=str, default='/opt/ml/input/level2_semanticsegmentation_cv-level2-cv-01/smp/trained_models/PAN_mit_b4_aug_221231_151543')
+    parser.add_argument('--ckpt', type=str, default='latest.pt') # 사용할 pt 명
     
     parser.add_argument('--num_examples', type=int, default=50) # 확인할 이미지 개수
     parser.add_argument('--data_dir', type=str, default='/opt/ml/input/data') # 이미지 불러올 때 사용
@@ -134,7 +134,7 @@ def plot_examples(args):
         encoder_weights=encoder_weights,
         in_channels=3,
         classes=11,
-        #encoder_output_stride=32,
+        encoder_output_stride=32,
     )
     preprocessing_fn = get_preprocessing_fn(encoder_name, encoder_weights)
     state_dict = load_model(model, os.path.join(args.base_dir, args.ckpt), device)
@@ -195,13 +195,14 @@ def plot_examples(args):
             result_by_class[k].sort(key=lambda x:x[-1])
 
         # mIoU 이미지 worst & best 저장
-        sort_save(args.num_examples, result_by_class['mIoU'][:args.num_examples], args.base_dir, args.ckpt, legend_elements, 'mIoU_worst', args.data_dir)
-        sort_save(args.num_examples, result_by_class['mIoU'][-args.num_examples:], args.base_dir, args.ckpt, legend_elements, 'mIoU_best', args.data_dir)
+        file_name = args.anno_dir.split('/')[-1].split('.')[0]
+        sort_save(args.num_examples, result_by_class['mIoU'][:args.num_examples], args.base_dir, args.ckpt, legend_elements, f'{file_name}_mIoU_worst', args.data_dir)
+        sort_save(args.num_examples, result_by_class['mIoU'][-args.num_examples:], args.base_dir, args.ckpt, legend_elements, f'{file_name}_mIoU_best', args.data_dir)
         print('mIoU images are saved')
 
         # 클래스별 IoU 이미지 저장
         for k in category_names:
-            sort_save(args.num_examples, result_by_class[k][:args.num_examples], args.base_dir, args.ckpt, legend_elements, k, args.data_dir)
+            sort_save(args.num_examples, result_by_class[k][:args.num_examples], args.base_dir, args.ckpt, legend_elements, f'{file_name}_{k}', args.data_dir)
             print(f'a {k} image is saved')
 
     else:
@@ -229,15 +230,15 @@ def plot_examples(args):
         fig, ax = plt.subplots(nrows=args.num_examples, ncols=3, figsize=(12, 4*args.num_examples), constrained_layout=True)
         for i, (image_infos, imgs, outs) in enumerate(result[:args.num_examples]):
             # Original Image
-            ax[i][0].imshow(plt.imread(os.path.join(args.data_dir, image_infos['file_name'])))
+            ax[i][0].imshow(plt.imread(os.path.join(args.data_dir, image_infos['file_name'])).astype('uint8'))
             ax[i][0].set_title(f"Orignal Image : {image_infos}")
             
             # Transformed Image
-            ax[i][1].imshow(imgs.transpose([1,2,0]))
+            ax[i][1].imshow(imgs.transpose([1,2,0]).astype('uint8'))
             ax[i][1].set_title(f"Orignal Image : {image_infos['file_name']}")
             
             # Pred Mask
-            ax[i][2].imshow(label_to_color_image(outs))
+            ax[i][2].imshow(label_to_color_image(outs).astype('uint8'))
             ax[i][2].set_title(f"Pred Mask : {image_infos['file_name']}")
             ax[i][2].legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
         

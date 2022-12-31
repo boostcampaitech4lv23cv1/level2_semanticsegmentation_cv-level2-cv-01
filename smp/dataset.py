@@ -7,6 +7,7 @@ import pandas as pd
 from torch.utils.data import Dataset
 from pycocotools.coco import COCO
 import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 
 def get_classname(classID, cats):
@@ -37,7 +38,7 @@ def get_transform(mode='train', preprocessing_fn=None):
         transform = [
             # geometric
             #A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 384, width = 384, ignore_values=[[0,0,0]]),
-            A.RandomResizedCrop(512, 512, (0.75, 1.0), p=0.5),
+            A.RandomResizedCrop(512, 512, (0.1, 1.0), p=0.5),
             A.GridDropout(ratio=0.2, random_offset=True, holes_number_x=4, holes_number_y=4, p=0.1),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
@@ -62,7 +63,7 @@ def get_transform(mode='train', preprocessing_fn=None):
                 std=[0.21060736, 0.20755924, 0.21633709],
                 max_pixel_value=1.0,
             ))
-    transform.append(A.pytorch.ToTensorV2())
+    transform.append(ToTensorV2())
 
     return A.Compose(transform)
     
