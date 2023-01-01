@@ -5,9 +5,6 @@
 1. Add this code on **/opt/conda/envs/mm_s/lib/python3.8/site-packages/mmseg/datasets/pipelines/transforms.py**
 
 ```
-
-```
-
 try:
 import albumentations
 from albumentations import Compose
@@ -119,7 +116,7 @@ keymap (dict): Contains {'input key':'albumentation-style key'}
     def __repr__(self):
         repr_str = self.__class__.__name__ + f"(transforms={self.transforms})"
         return repr_str
-
+```
 2. Add `Albu` on **/opt/conda/envs/mm_s/lib/python3.8/site-packages/mmseg/datasets/pipelines/**init**.py**
 
 ```
