@@ -3,7 +3,7 @@
 #     '../_base_/default_runtime.py', '../_base_/schedules/schedule_160k.py'
 # ]
 _base_ = [
-    "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/models/upernet_convnext.py",
+    "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/models/upernet_swin.py",
     "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/datasets/upstage.py",
     "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/default_runtime.py",
     "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/schedules/schedule.py",
@@ -53,4 +53,4 @@ lr_config = dict(
 )
 
 # By default, models are trained on 8 GPUs with 2 images per GPU
-data = dict(samples_per_gpu=2)
+data = dict(samples_per_gpu=1)

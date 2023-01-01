@@ -26,6 +26,7 @@ from .transforms import (
     Resize,
     RGB2Gray,
     SegRescale,
+    Albu,
 )
 
 __all__ = [
@@ -54,5 +55,4 @@ __all__ = [
     "RandomCutOut",
     "RandomMosaic",
     "Albu",
-    "Albumentations",
 ]

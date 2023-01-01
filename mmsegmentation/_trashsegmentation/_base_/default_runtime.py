@@ -1,4 +1,4 @@
-exp_name = "MODELNAME"
+exp_name = "upernet_convnext_xlarge_fp16_640x640_160k_ade20k_albu_230101_JUN"
 
 # yapf:disable
 log_config = dict(
@@ -10,8 +10,8 @@ log_config = dict(
             interval=50,
             with_step=False,
             init_kwargs=dict(
-                entity="quasar529",
-                project="Semantic_Segmentation",
+                entity="cv_1",
+                project="segmentation_practice",
                 name=f"{exp_name}",
             ),
         ),

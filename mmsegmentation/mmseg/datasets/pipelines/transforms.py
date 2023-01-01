@@ -9,38 +9,19 @@ from numpy import random
 from ..builder import PIPELINES
 
 try:
-    import albumentations as A
+    import albumentations
     from albumentations import Compose
 except ImportError:
     albumentations = None
     Compose = None
 
 
-@PIPELINES.register_module(name="Albumentations")
-class Albumentations:
-    """
-    e.g. (Add in _base_/datasets/trash_dataset.py -> train_pipeline)
-    dict(type='Albumentations', transform='MotionBlur', blur_limit=7, p=0.1)
-    """
-
-    def __init__(self, transform, **kwargs):
-        self.aug = getattr(A, transform)(**kwargs)
-
-    def __call__(self, results):
-        augmented = self.aug(image=results["img"], mask=results["gt_semantic_seg"])
-        results["img"] = augmented["image"]
-        results["gt_semantic_seg"] = augmented["mask"]
-
-        return results
-
-
-@PIPELINES.register_module(name="Albu", force=True)
+@PIPELINES.register_module()
 class Albu(object):
-    """Albumentation augmentation.
-    Adds custom transformations from Albumentations library.
-    Please, visit `https://albumentations.readthedocs.io`
-    to get more information.
-    An example of ``transforms`` is as followed:
+    """Albumentation augmentation. Adds custom transformations from
+    Albumentations library. Please, visit
+    `https://albumentations.readthedocs.io` to get more information. An example
+    of ``transforms`` is as followed:
     .. code-block::
         [
             dict(
@@ -69,30 +50,17 @@ class Albu(object):
         keymap (dict): Contains {'input key':'albumentation-style key'}
     """
 
-    def __init__(
-        self,
-        transforms,
-        #  bbox_params=None,
-        keymap=None,
-        update_pad_shape=False,
-    ):
-
+    def __init__(self, transforms, keymap=None, update_pad_shape=False):
+        # Args will be modified later, copying it will be safer
         transforms = copy.deepcopy(transforms)
-
         if keymap is not None:
             keymap = copy.deepcopy(keymap)
         self.transforms = transforms
         self.filter_lost_elements = False
         self.update_pad_shape = update_pad_shape
-
         self.aug = Compose([self.albu_builder(t) for t in self.transforms])
-
         if not keymap:
-            self.keymap_to_albu = {
-                "img": "image",
-                "gt_semantic_seg": "masks",
-                # 'gt_bboxes': 'bboxes'
-            }
+            self.keymap_to_albu = {"img": "image", "gt_semantic_seg": "mask"}
         else:
             self.keymap_to_albu = keymap
         self.keymap_back = {v: k for k, v in self.keymap_to_albu.items()}
@@ -105,35 +73,29 @@ class Albu(object):
         Returns:
             obj: The constructed object.
         """
-
         assert isinstance(cfg, dict) and "type" in cfg
         args = cfg.copy()
-
         obj_type = args.pop("type")
         if mmcv.is_str(obj_type):
-            obj_cls = getattr(A, obj_type)
+            obj_cls = getattr(albumentations, obj_type)
         else:
-            raise TypeError(
-                f"type must be a str or valid type, but got {type(obj_type)}"
-            )
-
+            raise TypeError(f"type must be str, but got {type(obj_type)}")
         if "transforms" in args:
             args["transforms"] = [
                 self.albu_builder(transform) for transform in args["transforms"]
             ]
-
         return obj_cls(**args)
 
     @staticmethod
     def mapper(d, keymap):
-        """Dictionary mapper. Renames keys according to keymap provided.
+        """Dictionary mapper.
+        Renames keys according to keymap provided.
         Args:
             d (dict): old dict
             keymap (dict): {'old_key':'new_key'}
         Returns:
             dict: new dict.
         """
-
         updated_dict = {}
         for k, v in zip(d.keys(), d.values()):
             new_k = keymap.get(k, k)
