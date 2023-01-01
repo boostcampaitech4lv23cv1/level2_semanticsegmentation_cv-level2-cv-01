@@ -20,8 +20,8 @@ def parse_args():
     parser = ArgumentParser()
 
     # model
-    parser.add_argument("--model_path", type=str, default="PAN_mit_b4_aug_221231_151543")
-    parser.add_argument("--metric", type=str, default="latest")
+    parser.add_argument("--model_path", type=str, default="FPN_mit_b4_aug_230101_192133")
+    parser.add_argument("--metric", type=str, default="epoch_67")
 
     # --tta
     parser.add_argument("--tta", type=bool, default=False)
@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument("--test_path", type=str, default="/opt/ml/input/data/test.json")
 
     # hyperparameters
-    parser.add_argument("--test_batch_size", type=int, default=2)
+    parser.add_argument("--test_batch_size", type=int, default=4)
     parser.add_argument("--input_size", type=int, default=512)
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
@@ -66,7 +66,7 @@ def test(args):
         encoder_weights=encoder_weights,
         in_channels=3,
         classes=11,
-        encoder_output_stride=32,
+        #encoder_output_stride=32,
     )
     preprocessing_fn = get_preprocessing_fn(encoder_name, encoder_weights)
     test_transform = get_transform(mode='test', preprocessing_fn=preprocessing_fn)

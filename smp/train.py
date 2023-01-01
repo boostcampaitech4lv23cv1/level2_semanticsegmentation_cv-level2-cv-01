@@ -36,7 +36,7 @@ def parse_args():
 
     # model
     parser.add_argument(
-        "--segmentation_model", type=str, default="PAN", 
+        "--segmentation_model", type=str, default="FPN", 
         help='Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN'
     )
     parser.add_argument("--encoder_name", type=str, default="mit_b4")
@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument("--saved_dir", type=str, default="trained_models")
 
     # dataset path
-    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/train_sorted_gentrash_100.json")
+    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/train_sorted.json")
     parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/val_sorted.json")
 
     # hyperparameters
@@ -68,7 +68,7 @@ def parse_args():
 
     # early stopping
     parser.add_argument("--early_stop", type=bool, default=True)
-    parser.add_argument("--patience", type=int, default=15)
+    parser.add_argument("--patience", type=int, default=20)
 
     # settings
     parser.add_argument("--seed", type=int, default=2022)
@@ -137,11 +137,11 @@ def train(args):
         import_module("segmentation_models_pytorch"), args.segmentation_model
     )
     model = model_module(
-        encoder_name=args.encoder_name,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights=args.encoder_weights,  # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=11,  # model output channels (number of classes in your dataset)
-        encoder_output_stride=32,
+        encoder_name=args.encoder_name,
+        encoder_weights=args.encoder_weights,
+        in_channels=3,
+        classes=11,
+        #encoder_output_stride=32,
     )
     preprocessing_fn = get_preprocessing_fn(args.encoder_name, args.encoder_weights)
     
@@ -240,7 +240,6 @@ def train(args):
                     images = torch.stack(images).to(device)
                     masks = torch.stack(masks).long().to(device)
 
-                    #images, masks = images.to(device), masks.to(device)
                     model = model.to(device)
 
                     with torch.cuda.amp.autocast():
@@ -316,8 +315,6 @@ def train(args):
 
                             images = torch.stack(images).to(device)
                             masks = torch.stack(masks).long().to(device)
-
-                            #images, masks = images.to(device), masks.to(device)
 
                             # device 할당
                             model = model.to(device)

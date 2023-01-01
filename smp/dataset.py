@@ -37,16 +37,22 @@ def get_transform(mode='train', preprocessing_fn=None):
     if mode=='train':
         transform = [
             # geometric
-            #A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 384, width = 384, ignore_values=[[0,0,0]]),
+            #A.OneOf([
+            #    A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256, ignore_values=[[0,0,0]]),
+            #    A.RandomResizedCrop(512, 512, (0.1, 1.0)),
+            #],p=0.5),
+            #A.Resize(512,512),
             A.RandomResizedCrop(512, 512, (0.1, 1.0), p=0.5),
-            A.GridDropout(ratio=0.2, random_offset=True, holes_number_x=4, holes_number_y=4, p=0.1),
+            A.OneOf([
+                A.GridDropout(ratio=0.2, random_offset=True, holes_number_x=4, holes_number_y=4),
+                A.CoarseDropout(max_holes=16),
+            ], p=0.2),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.OneOf([
-                A.ShiftScaleRotate(p=0.2, shift_limit=0.2, scale_limit=0.2, rotate_limit=45),
+                A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=45),
                 A.RandomRotate90(),
             ], p=0.2),
-            #A.RandomRotate90(),
 
             # style
             A.OneOf([
@@ -54,7 +60,6 @@ def get_transform(mode='train', preprocessing_fn=None):
                 A.ToGray(),
             ],p=0.2),
             A.RandomBrightnessContrast(p=0.5),
-            
         ]
     
     transform.append(A.Lambda(image=preprocessing_fn))
