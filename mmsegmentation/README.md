@@ -3,6 +3,7 @@
 ### How To Use
 
 1. Add this code on **/opt/conda/envs/{환경이름}/lib/python3.8/site-packages/mmseg/datasets/pipelines/transforms.py**
+and **/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/mmseg/datasets/pipelines/transforms.py**
 
 ```
 try:
@@ -118,6 +119,14 @@ keymap (dict): Contains {'input key':'albumentation-style key'}
         return repr_str
 ```
 2. Add `Albu` on **/opt/conda/envs/{가상환}/lib/python3.8/site-packages/mmseg/datasets/pipelines/**init**.py**
+and **/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/mmseg/datasets/pipelines/__init__.py**
+```
+from .transforms import (
+    CLAHE,
+...
+    Albu,
+)
+```
 
 ```
 __ all __ = [.....,'Albu']
