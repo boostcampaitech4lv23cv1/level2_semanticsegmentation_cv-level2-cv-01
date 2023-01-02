@@ -3,12 +3,15 @@ Unofficial implementation of Copy-Paste for semantic segmentation
 """
 
 from PIL import Image
+import json
 import imgviz
 import cv2
 import argparse
 import os
 import numpy as np
 import tqdm
+from collections import defaultdict
+from pycocotools.coco import COCO
 
 
 def save_colored_mask(mask, save_path):
@@ -82,7 +85,7 @@ def rescale_src(mask_src, img_src, h, w):
     return mask_pad, img_pad
 
 
-def Large_Scale_Jittering(mask, img, min_scale=0.1, max_scale=2.0):
+def Large_Scale_Jittering(mask, img, min_scale=0.3, max_scale=1.5):
     rescale_ratio = np.random.uniform(min_scale, max_scale)
     h, w, _ = img.shape
 
@@ -126,6 +129,29 @@ def copy_paste(mask_src, img_src, mask_main, img_main):
 
 
 def main(args):
+    
+    # copy paste for chosen categories : General Trash, Plastic, Paper Pack
+    paste_images = []
+
+    with open(args.file_name, 'r') as f:
+        target_json = json.load(f)
+    target_coco = COCO(args.file_name)
+
+    for i in range(len(target_json['images'][:])):
+    
+        img_id = target_coco.getImgIds(imgIds=i)
+        img_info = target_coco.loadImgs(img_id)[0]
+        img_name = img_info['file_name']
+
+        ann_ids = target_coco.getAnnIds(imgIds=img_info['id'])
+        anns = target_coco.loadAnns(ann_ids)
+
+        for ann in anns:
+            # 클래스별 포함하는 이미지 집합
+            if ann['category_id'] in [1, 3, 6]:
+                paste_images.append(img_name.replace('.jpg', '.png'))
+                break
+
     # input path
     segclass = os.path.join(args.input_dir, 'SegmentationClass')
     JPEGs = os.path.join(args.input_dir, 'JPEGImages')
@@ -141,14 +167,14 @@ def main(args):
     masks_path = batch01 + batch02 + batch03
     tbar = tqdm.tqdm(masks_path, ncols=100)
     for mask_path in tbar:
-        # get source mask and img
-        mask_src = np.asarray(Image.open(os.path.join(segclass, mask_path)), dtype=np.uint8)
-        img_src = cv2.imread(os.path.join(JPEGs, mask_path.replace('.png', '.jpg')))
+        # get main mask and img
+        mask_main = np.asarray(Image.open(os.path.join(segclass, mask_path)), dtype=np.uint8)
+        img_main = cv2.imread(os.path.join(JPEGs, mask_path.replace('.png', '.jpg')))
 
-        # random choice main mask/img
-        mask_main_path = np.random.choice(masks_path)
-        mask_main = np.asarray(Image.open(os.path.join(segclass, mask_main_path)), dtype=np.uint8)
-        img_main = cv2.imread(os.path.join(JPEGs, mask_main_path.replace('.png', '.jpg')))
+        # random choice src mask/img
+        mask_src_path = np.random.choice(paste_images)
+        mask_src = np.asarray(Image.open(os.path.join(segclass, mask_src_path)), dtype=np.uint8)
+        img_src = cv2.imread(os.path.join(JPEGs, mask_src_path.replace('.png', '.jpg')))
 
         # Copy-Paste data augmentation
         mask, img = copy_paste(mask_src, img_src, mask_main, img_main)
@@ -167,6 +193,8 @@ def get_args():
                         help="input annotated directory")
     parser.add_argument("--output_dir", default="/opt/ml/input/data/copy_paste/output", type=str,
                         help="output dataset directory")
+    parser.add_argument("--file_name", default="/opt/ml/input/data/train_all.json", type=str,
+                        help="json file name")
     parser.add_argument("--lsj", default=True, type=bool, help="if use Large Scale Jittering")
     return parser.parse_args()
 
