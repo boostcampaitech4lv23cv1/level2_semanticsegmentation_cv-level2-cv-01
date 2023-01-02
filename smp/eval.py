@@ -28,8 +28,8 @@ def parse_args():
     parser = ArgumentParser()
     
     # 위에 세개만 지정해주고 실행하면 됨
-    parser.add_argument('--anno_dir', type=str, default='/opt/ml/input/data/train_sorted_gentrash_100.json') # 시각화할 데이터셋 anno(train, val, test중 하나는 반드시 json 이름에 포함돼 있어야함)
-    parser.add_argument('--base_dir', type=str, default='/opt/ml/input/level2_semanticsegmentation_cv-level2-cv-01/smp/trained_models/PAN_mit_b4_aug_221231_151543')
+    parser.add_argument('--anno_dir', type=str, default='/opt/ml/input/data/train_sorted.json') # 시각화할 데이터셋 anno(train, val, test중 하나는 반드시 json 이름에 포함돼 있어야함)
+    parser.add_argument('--base_dir', type=str, default='/opt/ml/input/level2_semanticsegmentation_cv-level2-cv-01/smp/trained_models/FPN_mit_b4_aug_230101_192133')
     parser.add_argument('--ckpt', type=str, default='latest.pt') # 사용할 pt 명
     
     parser.add_argument('--num_examples', type=int, default=50) # 확인할 이미지 개수
@@ -134,7 +134,7 @@ def plot_examples(args):
         encoder_weights=encoder_weights,
         in_channels=3,
         classes=11,
-        encoder_output_stride=32,
+        #encoder_output_stride=32,
     )
     preprocessing_fn = get_preprocessing_fn(encoder_name, encoder_weights)
     state_dict = load_model(model, os.path.join(args.base_dir, args.ckpt), device)

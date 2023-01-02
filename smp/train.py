@@ -39,18 +39,18 @@ def parse_args():
         "--segmentation_model", type=str, default="FPN", 
         help='Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN'
     )
-    parser.add_argument("--encoder_name", type=str, default="mit_b4")
+    parser.add_argument("--encoder_name", type=str, default="mit_b5")
     parser.add_argument("--encoder_weights", type=str, default="imagenet")
 
     # path
     parser.add_argument("--saved_dir", type=str, default="trained_models")
 
     # dataset path
-    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/train_sorted.json")
-    parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/val_sorted.json")
+    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/fold5/train_all_sorted_train0.json")
+    parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/fold5/train_all_sorted_val0.json")
 
     # hyperparameters
-    parser.add_argument("--num_epochs", type=int, default=80)  # 20
+    parser.add_argument("--num_epochs", type=int, default=120)  # 20
     parser.add_argument(
         "--criterion", type=str, default="CrossEntropyLoss",
         help='CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss'
@@ -67,7 +67,7 @@ def parse_args():
     parser.add_argument("--alpha", type=float, default=0.2)
 
     # early stopping
-    parser.add_argument("--early_stop", type=bool, default=True)
+    parser.add_argument("--early_stop", type=bool, default=False)
     parser.add_argument("--patience", type=int, default=20)
 
     # settings
@@ -84,7 +84,8 @@ def parse_args():
 
     # 모델 sweep 용 모델명으로 이름 지정 -> 필요없으면 지워도됨
     #args.wandb_run = args.segmentation_model + "_" + args.encoder_name + "_" + args.encoder_weights
-    args.wandb_run = args.segmentation_model + "_" + args.encoder_name + "_aug"
+    args.wandb_run = args.segmentation_model + "_" + args.encoder_name + "_aug_" + args.train_path.split('/')[-1].split('.')[0] 
+    
 
     # early stop 안쓰는 경우 patience를 num_epochs으로 설정
     if not args.early_stop:
@@ -385,7 +386,7 @@ def train(args):
                 save_model(model, saved_dir, "latest.pt")
                 
                 # 50 이상인 5의 배수마다 ckpt 저장
-                if epoch + 1 > 45 and (epoch + 1)%5 == 0:
+                if epoch + 1 > 65 and (epoch + 1)%10 == 0:
                     save_model(model, saved_dir, f"epoch_{epoch+1}.pt")
 
                 if avrg_loss < best_loss:

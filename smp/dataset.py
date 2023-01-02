@@ -37,15 +37,15 @@ def get_transform(mode='train', preprocessing_fn=None):
     if mode=='train':
         transform = [
             # geometric
-            #A.OneOf([
-            #    A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256, ignore_values=[[0,0,0]]),
-            #    A.RandomResizedCrop(512, 512, (0.1, 1.0)),
-            #],p=0.5),
-            #A.Resize(512,512),
-            A.RandomResizedCrop(512, 512, (0.1, 1.0), p=0.5),
             A.OneOf([
-                A.GridDropout(ratio=0.2, random_offset=True, holes_number_x=4, holes_number_y=4),
-                A.CoarseDropout(max_holes=16),
+                A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256, ignore_values=[[0,0,0]], p=1.0),
+                A.RandomResizedCrop(height = 512, width = 512, scale=(0.08, 1.0), ratio=(0.75, 1.3333333333333333), p=1.0),
+            ],p=0.5),
+            A.Resize(512,512),
+            #A.RandomResizedCrop(512, 512, (0.08, 1.0), p=1.0),
+            A.OneOf([
+                A.GridDropout(ratio=0.2, random_offset=True, holes_number_x=4, holes_number_y=4, fill_value=[255,255,255]),
+                A.CoarseDropout(max_holes=16, fill_value=[255,255,255]),
             ], p=0.2),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
@@ -58,8 +58,8 @@ def get_transform(mode='train', preprocessing_fn=None):
             A.OneOf([
                 A.ChannelShuffle(),
                 A.ToGray(),
-            ],p=0.2),
-            A.RandomBrightnessContrast(p=0.5),
+            ],p=0.5),
+            A.RandomBrightnessContrast(p=0.2),
         ]
     
     transform.append(A.Lambda(image=preprocessing_fn))
