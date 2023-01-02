@@ -2,7 +2,7 @@
 
 ### How To Use
 
-1. Add this code on **/opt/conda/envs/mm_s/lib/python3.8/site-packages/mmseg/datasets/pipelines/transforms.py**
+1. Add this code on **/opt/conda/envs/{환경이름}/lib/python3.8/site-packages/mmseg/datasets/pipelines/transforms.py**
 
 ```
 try:
@@ -117,7 +117,7 @@ keymap (dict): Contains {'input key':'albumentation-style key'}
         repr_str = self.__class__.__name__ + f"(transforms={self.transforms})"
         return repr_str
 ```
-2. Add `Albu` on **/opt/conda/envs/mm_s/lib/python3.8/site-packages/mmseg/datasets/pipelines/**init**.py**
+2. Add `Albu` on **/opt/conda/envs/{가상환}/lib/python3.8/site-packages/mmseg/datasets/pipelines/**init**.py**
 
 ```
 __ all __ = [.....,'Albu']
