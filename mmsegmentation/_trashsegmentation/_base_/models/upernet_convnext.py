@@ -25,7 +25,18 @@ model = dict(
         num_classes=11,
         norm_cfg=norm_cfg,
         align_corners=False,
-        loss_decode=dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=1.0),
+        # loss_decode=dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=1.0),
+        # loss_decode=dict(
+        #     _delete_=True,
+        #     type="FocalDiceLoss",
+        #     loss_weight=1.0,
+        #     focal_ratio=0.75,
+        #     dice_ratio=0.25,
+        # ),
+        loss_decode=[
+            dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=0.75),
+            dict(type="DiceLoss", loss_weight=0.25),
+        ],
     ),
     auxiliary_head=dict(
         type="FCNHead",
@@ -38,7 +49,18 @@ model = dict(
         num_classes=11,
         norm_cfg=norm_cfg,
         align_corners=False,
-        loss_decode=dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=0.4),
+        # loss_decode=dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=0.4),
+        # loss_decode=dict(
+        #     _delete_=True,
+        #     type="FocalDiceLoss",
+        #     loss_weight=1.0,
+        #     focal_ratio=0.75,
+        #     dice_ratio=0.25,
+        # ),
+        loss_decode=[
+            dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=0.75),
+            dict(type="DiceLoss", loss_weight=0.25),
+        ],
     ),
     # model training and testing settings
     train_cfg=dict(),

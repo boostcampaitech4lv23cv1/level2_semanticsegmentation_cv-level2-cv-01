@@ -5,7 +5,7 @@ _base_ = [
     "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/schedules/schedule.py",
 ]
 model = dict(
-    pretrained="/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/beit/beit_large_patch16_224_pt22k_ft22k.pth",
+    pretrained="/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/beit/beit.pth",
     backbone=dict(
         type="BEiT",
         embed_dims=1024,
@@ -46,7 +46,7 @@ lr_config = dict(
     by_epoch=False,
 )
 
-data = dict(samples_per_gpu=1)
+data = dict(samples_per_gpu=4)
 optimizer_config = dict(type="GradientCumulativeFp16OptimizerHook", cumulative_iters=2)
 
 fp16 = dict()

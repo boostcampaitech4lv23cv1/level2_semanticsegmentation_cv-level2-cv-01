@@ -1,4 +1,4 @@
-exp_name = "upernet_convnext_xlarge_fp16_640x640_160k_ade20k_albu_230101_JUN"
+exp_name = "CONVNEXT_XL_albu_loss_230102_JUN"
 
 # yapf:disable
 log_config = dict(

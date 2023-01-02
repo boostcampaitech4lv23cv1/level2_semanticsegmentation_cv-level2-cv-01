@@ -40,6 +40,20 @@ albu_train_transforms = [
     dict(type="GridDropout"),
     dict(type="ColorJitter"),
     dict(
+        type="OneOf",
+        transforms=[
+            dict(type="RandomBrightness"),
+            dict(
+                type="HueSaturationValue",
+                hue_shift_limit=15,
+                sat_shift_limit=25,
+                val_shift_limit=10,
+                p=1.0,
+            ),
+        ],
+        p=0.3,
+    ),
+    dict(
         type="CropNonEmptyMaskIfExists",
         height=256,
         width=256,
@@ -86,7 +100,7 @@ test_pipeline = [
     dict(
         type="MultiScaleFlipAug",
         img_scale=(512, 512),
-        flip=False,
+        flip=True,
         flip_direction=["horizontal", "vertical"],
         transforms=[
             dict(type="Resize", keep_ratio=True),
@@ -126,7 +140,7 @@ data = dict(
         img_dir=data_root + "images/test",
         pipeline=test_pipeline,
     ),
-    train_dataloader=dict(samples_per_gpu=8, workers_per_gpu=4, shuffle=True),
+    train_dataloader=dict(samples_per_gpu=4, workers_per_gpu=4, shuffle=True),
     val_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=4, shuffle=False),
 )

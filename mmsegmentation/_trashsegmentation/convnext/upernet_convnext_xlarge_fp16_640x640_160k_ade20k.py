@@ -4,7 +4,7 @@ _base_ = [
     "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/default_runtime.py",
     "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/schedules/schedule.py",
 ]
-crop_size = (640, 640)
+crop_size = (512, 512)
 checkpoint_file = "https://download.openmmlab.com/mmclassification/v0/convnext/downstream/convnext-xlarge_3rdparty_in21k_20220301-08aa5ddc.pth"  # noqa
 model = dict(
     backbone=dict(
@@ -48,7 +48,7 @@ lr_config = dict(
 )
 
 # By default, models are trained on 8 GPUs with 2 images per GPU
-data = dict(samples_per_gpu=2)
+data = dict(samples_per_gpu=4)
 # fp16 settings
 optimizer_config = dict(type="Fp16OptimizerHook", loss_scale="dynamic")
 # fp16 placeholder
