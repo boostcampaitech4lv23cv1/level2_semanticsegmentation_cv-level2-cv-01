@@ -1,9 +1,7 @@
-lr = 1e-5
-
 # optimizer
 optimizer = dict(
     type="AdamW",
-    lr=lr,
+    lr=1e-5,
     betas=(0.9, 0.999),
     weight_decay=0.01,
     paramwise_cfg=dict(
@@ -29,9 +27,9 @@ lr_config = dict(
 
 # runtime settings
 runner = dict(type="IterBasedRunner", max_iters=80000)
-checkpoint_config = dict(by_epoch=False, interval=10000)
+checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
 evaluation = dict(
-    interval=5000,
+    interval=8000,
     metric="mIoU",
     save_best="mIoU",
     classwise=True,

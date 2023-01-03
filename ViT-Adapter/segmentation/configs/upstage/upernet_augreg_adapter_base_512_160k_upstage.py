@@ -1,9 +1,9 @@
 # Copyright (c) Shanghai AI Lab. All rights reserved.
 _base_ = [
-    "../_base_/models/upernet_r50.py",
-    "../_base_/datasets/ade20k.py",
+    "../_base_/models/upernet_beit_upstage.py",
+    "../_base_/datasets/upstage.py",
     "../_base_/default_runtime.py",
-    "../_base_/schedules/schedule_160k.py",
+    "../_base_/schedules/schedule_fp16.py",
 ]
 # pretrained = 'https://github.com/czczup/ViT-Adapter/releases/download/v0.3.1/B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_384.pth'
 pretrained = "pretrained/B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_384.pth"
@@ -81,12 +81,13 @@ optimizer = dict(
     ),
 )
 
-# By default, models are trained on 8 GPUs with 2 images per GPU
 data = dict(
-    samples_per_gpu=2,
+    samples_per_gpu=4,
+    workers_per_gpu=4,
     train=dict(pipeline=train_pipeline),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline),
 )
+
 checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
 fp16 = dict(loss_scale=dict(init_scale=512))

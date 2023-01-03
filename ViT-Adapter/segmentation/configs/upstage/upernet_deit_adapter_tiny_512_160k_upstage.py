@@ -77,6 +77,5 @@ data = dict(
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline),
 )
-runner = dict(type="IterBasedRunner")
-evaluation = dict(interval=16000, metric="mIoU", save_best="mIoU")
+
 fp16 = dict(loss_scale=dict(init_scale=512))

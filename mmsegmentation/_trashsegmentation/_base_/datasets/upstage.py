@@ -125,7 +125,7 @@ data = dict(
         palette=palette,
         type=dataset_type,
         reduce_zero_label=False,
-        img_dir=data_root + "test",
+        img_dir=data_root + "images/test",
         pipeline=test_pipeline,
     ),
     train_dataloader=dict(samples_per_gpu=32, workers_per_gpu=4, shuffle=True),
