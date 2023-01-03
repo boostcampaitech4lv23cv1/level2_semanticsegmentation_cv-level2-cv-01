@@ -1,39 +1,42 @@
 # Copyright (c) Shanghai AI Lab. All rights reserved.
 _base_ = [
-    "../_base_/models/mask2former_beit_upstage.py",
+    "../_base_/models/mask2former_beit_cityscapes.py",
     "../_base_/datasets/upstage.py",
     "../_base_/default_runtime.py",
     "../_base_/schedules/schedule.py",
 ]
-crop_size = (256, 256)
-# pretrained = 'https://conversationhub.blob.core.windows.net/beit-share-public/beit/beit_base_patch16_224_pt22k_ft22k.pth'
-pretrained = "pretrained/beit_base_patch16_224_pt22k_ft22k.pth"
+crop_size = (896, 896)
+# pretrained = "https://conversationhub.blob.core.windows.net/beit-share-public/beit/beit_large_patch16_224_pt22k_ft22k.pth"
+pretrained = "pretrained/beit_large_patch16_224_pt22k_ft22k.pth"
+# load_from = "https://github.com/czczup/ViT-Adapter/releases/download/v0.2.3/mask2former_beit_adapter_large_896_80k_mapillary.zip"
+load_from = "pretrained/mask2former_beit_adapter_large_896_80k_mapillary.pth.tar"
 model = dict(
     pretrained=pretrained,
     backbone=dict(
         type="BEiTAdapter",
-        img_size=256,
+        img_size=896,
         patch_size=16,
-        embed_dim=768,
-        depth=12,
-        num_heads=12,
+        embed_dim=1024,
+        depth=24,
+        num_heads=16,
         mlp_ratio=4,
         qkv_bias=True,
         use_abs_pos_emb=False,
         use_rel_pos_bias=True,
         init_values=1e-6,
-        drop_path_rate=0.2,
+        drop_path_rate=0.3,
         conv_inplane=64,
         n_points=4,
-        deform_num_heads=12,
+        deform_num_heads=16,
         cffn_ratio=0.25,
         deform_ratio=0.5,
-        interaction_indexes=[[0, 2], [3, 5], [6, 8], [9, 11]],
+        with_cp=True,  # set with_cp=True to save memory
+        interaction_indexes=[[0, 5], [6, 11], [12, 17], [18, 23]],
     ),
     decode_head=dict(
-        in_channels=[768, 768, 768, 768],
-        feat_channels=256,
-        out_channels=256,
+        in_channels=[1024, 1024, 1024, 1024],
+        feat_channels=1024,
+        out_channels=1024,
         num_queries=100,
         pixel_decoder=dict(
             type="MSDeformAttnPixelDecoder",
@@ -47,8 +50,8 @@ model = dict(
                     type="BaseTransformerLayer",
                     attn_cfgs=dict(
                         type="MultiScaleDeformableAttention",
-                        embed_dims=256,
-                        num_heads=8,
+                        embed_dims=1024,
+                        num_heads=32,
                         num_levels=3,
                         num_points=4,
                         im2col_step=64,
@@ -59,10 +62,11 @@ model = dict(
                     ),
                     ffn_cfgs=dict(
                         type="FFN",
-                        embed_dims=256,
-                        feedforward_channels=1024,
+                        embed_dims=1024,
+                        feedforward_channels=4096,
                         num_fcs=2,
                         ffn_drop=0.0,
+                        with_cp=True,  # set with_cp=True to save memory
                         act_cfg=dict(type="ReLU", inplace=True),
                     ),
                     operation_order=("self_attn", "norm", "ffn", "norm"),
@@ -70,12 +74,12 @@ model = dict(
                 init_cfg=None,
             ),
             positional_encoding=dict(
-                type="SinePositionalEncoding", num_feats=128, normalize=True
+                type="SinePositionalEncoding", num_feats=512, normalize=True
             ),
             init_cfg=None,
         ),
         positional_encoding=dict(
-            type="SinePositionalEncoding", num_feats=128, normalize=True
+            type="SinePositionalEncoding", num_feats=512, normalize=True
         ),
         transformer_decoder=dict(
             type="DetrTransformerDecoder",
@@ -85,23 +89,24 @@ model = dict(
                 type="DetrTransformerDecoderLayer",
                 attn_cfgs=dict(
                     type="MultiheadAttention",
-                    embed_dims=256,
-                    num_heads=8,
+                    embed_dims=1024,
+                    num_heads=32,
                     attn_drop=0.0,
                     proj_drop=0.0,
                     dropout_layer=None,
                     batch_first=False,
                 ),
                 ffn_cfgs=dict(
-                    embed_dims=256,
-                    feedforward_channels=2048,
+                    embed_dims=1024,
+                    feedforward_channels=4096,
                     num_fcs=2,
                     act_cfg=dict(type="ReLU", inplace=True),
                     ffn_drop=0.0,
                     dropout_layer=None,
+                    with_cp=True,  # set with_cp=True to save memory
                     add_identity=True,
                 ),
-                feedforward_channels=2048,
+                feedforward_channels=4096,
                 operation_order=(
                     "cross_attn",
                     "norm",
@@ -114,18 +119,16 @@ model = dict(
             init_cfg=None,
         ),
     ),
-    test_cfg=dict(mode="slide", crop_size=crop_size, stride=(196, 196)),
+    test_cfg=dict(mode="slide", crop_size=crop_size, stride=(512, 512)),
 )
 # dataset settings
 img_norm_cfg = dict(
-    mean=[106.751564, 112.074585, 117.30821],
-    std=[55.021267, 52.829983, 53.68884],
-    to_rgb=True,
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True
 )
 train_pipeline = [
     dict(type="LoadImageFromFile"),
-    dict(type="LoadAnnotations", reduce_zero_label=False),
-    dict(type="Resize", img_scale=(512, 512), ratio_range=(0.5, 2.0)),
+    dict(type="LoadAnnotations"),
+    dict(type="Resize", img_scale=(2048, 1024), ratio_range=(0.5, 2.0)),
     dict(type="RandomCrop", crop_size=crop_size, cat_max_ratio=0.75),
     dict(type="RandomFlip", prob=0.5),
     dict(type="PhotoMetricDistortion"),
@@ -135,31 +138,14 @@ train_pipeline = [
     dict(type="DefaultFormatBundle"),
     dict(type="Collect", keys=["img", "gt_semantic_seg", "gt_masks", "gt_labels"]),
 ]
-test_pipeline = [
-    dict(type="LoadImageFromFile"),
-    dict(
-        type="MultiScaleFlipAug",
-        img_scale=(512, 512),
-        # img_ratios=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
-        flip=False,
-        transforms=[
-            dict(type="Resize", keep_ratio=True),
-            dict(type="ResizeToMultiple", size_divisor=32),
-            dict(type="RandomFlip"),
-            dict(type="Normalize", **img_norm_cfg),
-            dict(type="ImageToTensor", keys=["img"]),
-            dict(type="Collect", keys=["img"]),
-        ],
-    ),
-]
 optimizer = dict(
     _delete_=True,
     type="AdamW",
-    lr=3e-5,
+    lr=2e-5,
     betas=(0.9, 0.999),
     weight_decay=0.05,
     constructor="LayerDecayOptimizerConstructor",
-    paramwise_cfg=dict(num_layers=12, layer_decay_rate=0.95),
+    paramwise_cfg=dict(num_layers=24, layer_decay_rate=0.90),
 )
 lr_config = dict(
     _delete_=True,
@@ -171,15 +157,7 @@ lr_config = dict(
     min_lr=0.0,
     by_epoch=False,
 )
-data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=4,
-    train=dict(pipeline=train_pipeline),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline),
-)
-runner = dict(type="IterBasedRunner", max_iters=40000)
+data = dict(samples_per_gpu=1, train=dict(pipeline=train_pipeline))
+runner = dict(type="IterBasedRunner")
 checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
-evaluation = dict(
-    interval=4000, metric="mIoU", save_best="mIoU", classwise=True, pre_eval=True
-)
+evaluation = dict(interval=1000, metric="mIoU", save_best="mIoU")
