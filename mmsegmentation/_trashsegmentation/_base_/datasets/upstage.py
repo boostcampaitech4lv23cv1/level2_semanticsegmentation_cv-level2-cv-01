@@ -39,20 +39,20 @@ albu_train_transforms = [
     dict(type="Rotate", limit=(-30, 30), p=0.5),
     dict(type="GridDropout"),
     dict(type="ColorJitter"),
-    dict(
-        type="OneOf",
-        transforms=[
-            dict(type="RandomBrightness"),
-            dict(
-                type="HueSaturationValue",
-                hue_shift_limit=15,
-                sat_shift_limit=25,
-                val_shift_limit=10,
-                p=1.0,
-            ),
-        ],
-        p=0.3,
-    ),
+    # dict(
+    #     type="OneOf",
+    #     transforms=[
+    #         dict(type="RandomBrightness"),
+    #         dict(
+    #             type="HueSaturationValue",
+    #             hue_shift_limit=15,
+    #             sat_shift_limit=25,
+    #             val_shift_limit=10,
+    #             p=1.0,
+    #         ),
+    #     ],
+    #     p=0.3,
+    # ),
     dict(
         type="CropNonEmptyMaskIfExists",
         height=256,
@@ -119,8 +119,8 @@ data = dict(
         palette=palette,
         type=dataset_type,
         reduce_zero_label=False,
-        img_dir=data_root + "images/train",
-        ann_dir=data_root + "annotations/train",
+        img_dir=data_root + "images/pseudo_label",
+        ann_dir=data_root + "annotations/pseudo_label",
         pipeline=train_pipeline,
     ),
     val=dict(

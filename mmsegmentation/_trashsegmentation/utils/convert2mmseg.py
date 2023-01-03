@@ -97,6 +97,8 @@ def main(json_path):
 
 
 if __name__ == "__main__":
-    main("/opt/ml/input/data/train.json")
-    main("/opt/ml/input/data/val.json")
-    main("/opt/ml/input/data/test.json")
+    main(
+        "/opt/ml/input/data/pseudolabel_upernet_convnext_xlarge_fp16_640x640_160k_ade20k_epoch_90_tta.json"
+    )
+    # main("/opt/ml/input/data/val.json")
+    # main("/opt/ml/input/data/test.json")
