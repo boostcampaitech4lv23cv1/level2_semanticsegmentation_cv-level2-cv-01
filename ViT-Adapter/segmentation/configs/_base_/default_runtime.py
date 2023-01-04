@@ -1,4 +1,4 @@
-exp_name = "Mask2Former + Vitadapter_Base + BeiT-B Pretrained + 256/512"
+exp_name = "Mask2Former + Vitadapter_Large + BeitL Pretrained"
 my_name = "YOON"
 seed = 2022
 gpu_ids = 0
@@ -24,7 +24,7 @@ log_config = dict(
 dist_params = dict(backend="nccl")
 log_level = "INFO"
 load_from = None
-resume_from = None
+resume_from = "work_dirs/mask2former_beit_adapter_large_512_40k_upstage_ss/best_mIoU_iter_4000.pth"
 workflow = [("train", 1), ("val", 1)]
 opencv_num_threads = 0
 mp_start_method = "fork"
