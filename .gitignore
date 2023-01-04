@@ -307,6 +307,5 @@ submission
 trained_models/
 wandb/
 work_dirs/
-wandb/
 artifacts/
 pretrained/
