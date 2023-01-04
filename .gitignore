@@ -306,9 +306,9 @@ submission
 
 trained_models/
 wandb/
-mmsegmentation/work_dirs
-mmsegmentation/wandb
-mmsegmentation/artifacts
-mmsegmentation/pretrained
+work_dirs/
+wandb/
+artifacts/
+pretrained/
 
-mmsegmentation/_trashsegmentation/beit/beit_large_patch16_224_pt22k_ft22k.pth
+*.pth

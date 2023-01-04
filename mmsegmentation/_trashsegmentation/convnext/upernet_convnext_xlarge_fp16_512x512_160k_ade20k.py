@@ -4,7 +4,7 @@ _base_ = [
     "../_base_/default_runtime.py",
     "../_base_/schedules/schedule.py",
 ]
-crop_size = (640, 640)
+crop_size = (512, 512)
 checkpoint_file = "https://download.openmmlab.com/mmclassification/v0/convnext/downstream/convnext-xlarge_3rdparty_in21k_20220301-08aa5ddc.pth"  # noqa
 model = dict(
     backbone=dict(
@@ -23,7 +23,7 @@ model = dict(
         num_classes=11,
     ),
     auxiliary_head=dict(in_channels=1024, num_classes=11),
-    test_cfg=dict(mode="slide", crop_size=crop_size, stride=(426, 426)),
+    test_cfg=dict(mode="slide", crop_size=crop_size, stride=(341, 341)),
 )
 
 optimizer = dict(
@@ -49,6 +49,9 @@ lr_config = dict(
 
 # By default, models are trained on 8 GPUs with 2 images per GPU
 data = dict(samples_per_gpu=2)
+
+checkpoint_config = dict(by_epoch=True, interval=100, max_keep_ckpts=1)
+
 # fp16 settings
 optimizer_config = dict(type="Fp16OptimizerHook", loss_scale="dynamic")
 # fp16 placeholder

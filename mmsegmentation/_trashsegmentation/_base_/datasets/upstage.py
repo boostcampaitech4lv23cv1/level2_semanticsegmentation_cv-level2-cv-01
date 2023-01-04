@@ -1,7 +1,3 @@
-from mmcls.datasets.pipelines.transforms import Albu
-
-PIPELINES.register_module(module=Albu)
-
 # dataset settings
 dataset_type = "CustomDataset"
 data_root = "/opt/ml/input/data/mmseg/"
