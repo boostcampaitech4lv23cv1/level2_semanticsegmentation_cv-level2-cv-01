@@ -1,8 +1,8 @@
 _base_ = [
-    "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/models/upernet_convnext.py",
-    "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/datasets/upstage.py",
-    "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/default_runtime.py",
-    "/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/_base_/schedules/schedule.py",
+    "../_base_/models/upernet_convnext.py",
+    "../_base_/datasets/upstage.py",
+    "../_base_/default_runtime.py",
+    "../_base_/schedules/schedule.py",
 ]
 crop_size = (640, 640)
 checkpoint_file = "https://download.openmmlab.com/mmclassification/v0/convnext/downstream/convnext-xlarge_3rdparty_in21k_20220301-08aa5ddc.pth"  # noqa

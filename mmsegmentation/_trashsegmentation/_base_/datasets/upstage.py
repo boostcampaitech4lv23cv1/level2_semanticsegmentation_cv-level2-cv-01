@@ -1,3 +1,7 @@
+from mmcls.datasets.pipelines.transforms import Albu
+
+PIPELINES.register_module(module=Albu)
+
 # dataset settings
 dataset_type = "CustomDataset"
 data_root = "/opt/ml/input/data/mmseg/"
@@ -56,7 +60,7 @@ train_pipeline = [
         type="Albu",
         transforms=albu_train_transforms,
         keymap=dict(img="image", gt_semantic_seg="mask"),
-        update_pad_shape=True,
+        update_pad_shape=False,
     ),
     dict(type="PhotoMetricDistortion"),
     dict(type="Normalize", **img_norm_cfg),
