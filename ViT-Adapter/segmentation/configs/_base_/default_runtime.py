@@ -24,7 +24,7 @@ log_config = dict(
 dist_params = dict(backend="nccl")
 log_level = "INFO"
 load_from = None
-resume_from = "work_dirs/mask2former_beit_adapter_large_512_40k_upstage_ss/best_mIoU_iter_4000.pth"
+resume_from = None
 workflow = [("train", 1), ("val", 1)]
 opencv_num_threads = 0
 mp_start_method = "fork"
