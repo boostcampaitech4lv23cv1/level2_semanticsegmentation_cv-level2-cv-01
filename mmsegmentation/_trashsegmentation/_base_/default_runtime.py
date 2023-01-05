@@ -1,4 +1,4 @@
-exp_name = "CONVNEXT_XL_albu_loss_PL_90_FT_230102_JUN"
+exp_name = "CONVNEXT_XL_albu_loss_CP_JUN"
 
 # yapf:disable
 log_config = dict(

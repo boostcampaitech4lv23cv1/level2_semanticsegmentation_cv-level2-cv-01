@@ -39,20 +39,20 @@ albu_train_transforms = [
     dict(type="Rotate", limit=(-30, 30), p=0.5),
     dict(type="GridDropout"),
     dict(type="ColorJitter"),
-    # dict(
-    #     type="OneOf",
-    #     transforms=[
-    #         dict(type="RandomBrightness"),
-    #         dict(
-    #             type="HueSaturationValue",
-    #             hue_shift_limit=15,
-    #             sat_shift_limit=25,
-    #             val_shift_limit=10,
-    #             p=1.0,
-    #         ),
-    #     ],
-    #     p=0.3,
-    # ),
+    dict(
+        type="OneOf",
+        transforms=[
+            dict(type="RandomBrightness"),
+            dict(
+                type="HueSaturationValue",
+                hue_shift_limit=15,
+                sat_shift_limit=25,
+                val_shift_limit=10,
+                p=1.0,
+            ),
+        ],
+        p=0.3,
+    ),
     dict(
         type="CropNonEmptyMaskIfExists",
         height=256,
@@ -119,8 +119,8 @@ data = dict(
         palette=palette,
         type=dataset_type,
         reduce_zero_label=False,
-        img_dir=data_root + "images/pseudo_label",
-        ann_dir=data_root + "annotations/pseudo_label",
+        img_dir=data_root + "images/fold0_pseudo",
+        ann_dir=data_root + "annotations/fold0_pseudo",
         pipeline=train_pipeline,
     ),
     val=dict(
@@ -128,8 +128,8 @@ data = dict(
         palette=palette,
         type=dataset_type,
         reduce_zero_label=False,
-        img_dir=data_root + "images/val",
-        ann_dir=data_root + "annotations/val",
+        img_dir=data_root + "images/train_all_sorted_val0",
+        ann_dir=data_root + "annotations/train_all_sorted_val0",
         pipeline=valid_pipeline,
     ),
     test=dict(
