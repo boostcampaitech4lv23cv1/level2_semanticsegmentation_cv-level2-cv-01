@@ -309,3 +309,5 @@ wandb/
 work_dirs/
 artifacts/
 pretrained/
+*.pth
+
