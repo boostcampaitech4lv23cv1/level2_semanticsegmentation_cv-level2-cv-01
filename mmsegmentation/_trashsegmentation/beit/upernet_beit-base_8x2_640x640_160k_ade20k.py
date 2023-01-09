@@ -7,7 +7,7 @@ _base_ = [
 
 model = dict(
     pretrained="/opt/ml/level2_semanticsegmentation_cv-level2-cv-01/mmsegmentation/_trashsegmentation/beit/beit_large_patch16_224_pt22k_ft22k.pth",
-    test_cfg=dict(mode="slide", crop_size=(640, 640), stride=(426, 426)),
+    test_cfg=dict(mode="slide", crop_size=(512, 512), stride=(426, 426)),
 )
 
 optimizer = dict(
