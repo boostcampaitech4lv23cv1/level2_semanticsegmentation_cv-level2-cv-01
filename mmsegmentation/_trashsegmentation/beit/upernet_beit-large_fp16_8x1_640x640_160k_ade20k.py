@@ -22,7 +22,7 @@ model = dict(
         in_channels=[1024, 1024, 1024, 1024], num_classes=11, channels=1024
     ),
     auxiliary_head=dict(in_channels=1024, num_classes=11),
-    test_cfg=dict(mode="slide", crop_size=(640, 640), stride=(426, 426)),
+    test_cfg=dict(mode="slide", crop_size=(512, 512), stride=(426, 426)),
 )
 
 optimizer = dict(
