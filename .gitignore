@@ -312,3 +312,4 @@ mmsegmentation/artifacts
 mmsegmentation/pretrained
 
 mmsegmentation/_trashsegmentation/beit/beit_large_patch16_224_pt22k_ft22k.pth
+mmsegmentation/_trashsegmentation/beit/beitv2_large_patch16_224_pt1k_ft21k.pth
