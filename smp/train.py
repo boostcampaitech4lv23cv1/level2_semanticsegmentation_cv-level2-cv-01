@@ -1,36 +1,33 @@
 import os
 import math
 import json
-import random
 import warnings
-
 warnings.filterwarnings("ignore")
 
 import torch
 from utils import label_accuracy_score, add_hist
-from importlib import import_module
+from torch.optim.lr_scheduler import StepLR, MultiStepLR, CosineAnnealingLR
 
 import numpy as np
 from tqdm import tqdm
-
-from torch.optim.lr_scheduler import StepLR, MultiStepLR
+from argparse import ArgumentParser
+from importlib import import_module
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-from argparse import ArgumentParser
-
+import wandb
 from pytz import timezone
 from datetime import datetime
-import wandb
 
 import segmentation_models_pytorch as smp
+from segmentation_models_pytorch.encoders import get_preprocessing_fn
 
-from dataset import *
+from dataset import get_transform, collate_fn, CustomDataLoader, Mixup
+from utils import seed_everything, get_lr, save_model, CosineAnnealingWarmUpRestarts
 
 # when using xception encoder
 import ssl
-
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -39,30 +36,30 @@ def parse_args():
 
     # model
     parser.add_argument(
-        "--segmentation_model", type=str, default="Unet"
-    )  # [Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN]
-    parser.add_argument("--encoder_name", type=str, default="resnet34")
+        "--segmentation_model", type=str, default="FPN", 
+        help='Unet, UnetPlusPlus, MAnet, Linknet, FPN, PSPNet, DeepLabV3, DeepLabV3Plus, PAN'
+    )
+    parser.add_argument("--encoder_name", type=str, default="mit_b5")
     parser.add_argument("--encoder_weights", type=str, default="imagenet")
 
     # path
     parser.add_argument("--saved_dir", type=str, default="trained_models")
 
     # dataset path
-    parser.add_argument(
-        "--train_path", type=str, default="/opt/ml/input/data/train.json"
-    )
-    parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/val.json")
+    parser.add_argument("--train_path", type=str, default="/opt/ml/input/data/fold5/train_all_sorted_train0.json")
+    parser.add_argument("--valid_path", type=str, default="/opt/ml/input/data/fold5/train_all_sorted_val0.json")
 
     # hyperparameters
-    parser.add_argument("--num_epochs", type=int, default=50)  # 20
+    parser.add_argument("--num_epochs", type=int, default=120)  # 20
     parser.add_argument(
-        "--criterion", type=str, default="CrossEntropyLoss"
-    )  # [CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss]
-    parser.add_argument("--learning_rate", type=float, default=1e-3)  # 1e-4
+        "--criterion", type=str, default="CrossEntropyLoss",
+        help='CrossEntropyLoss, JaccardLoss, DiceLoss, FocalLoss, LovaszLoss, SoftBCEWithLogitsLoss, SoftCrossEntropyLoss, TverskyLoss, MCCLoss'
+    )
+    parser.add_argument("--learning_rate", type=float, default=2e-5)  # 1e-4
     parser.add_argument("--weight_decay", type=float, default=1e-6)
     parser.add_argument("--train_batch_size", type=int, default=16)
     parser.add_argument("--valid_batch_size", type=int, default=16)
-    parser.add_argument("--optimizer", type=str, default="Adam")
+    parser.add_argument("--optimizer", type=str, default="AdamW")
     parser.add_argument("--num_workers", type=int, default=4)
 
     # mixup
@@ -70,74 +67,31 @@ def parse_args():
     parser.add_argument("--alpha", type=float, default=0.2)
 
     # early stopping
-    parser.add_argument("--early_stop", type=bool, default=True)
-    parser.add_argument("--patience", type=int, default=7)
+    parser.add_argument("--early_stop", type=bool, default=False)
+    parser.add_argument("--patience", type=int, default=20)
 
     # settings
     parser.add_argument("--seed", type=int, default=2022)
     parser.add_argument("--val_every", type=int, default=1)
-    parser.add_argument(
-        "--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu"
-    )
+    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
 
     # wandb
-    parser.add_argument("--wandb_project", type=str, default="segmentation_practice")
-    parser.add_argument("--wandb_entity", type=str, default="myeongheonchoi")
+    parser.add_argument("--wandb_project", type=str, default="Segmentation")
+    parser.add_argument("--wandb_entity", type=str, default="wooyeolbaek")
     parser.add_argument("--wandb_run", type=str, default="exp")
 
     args = parser.parse_args()
 
     # 모델 sweep 용 모델명으로 이름 지정 -> 필요없으면 지워도됨
-    args.wandb_run = (
-        args.segmentation_model + "_" + args.encoder_name + "_" + args.encoder_weights
-    )
+    #args.wandb_run = args.segmentation_model + "_" + args.encoder_name + "_" + args.encoder_weights
+    args.wandb_run = args.segmentation_model + "_" + args.encoder_name + "_aug_" + args.train_path.split('/')[-1].split('.')[0] 
+    
 
     # early stop 안쓰는 경우 patience를 num_epochs으로 설정
     if not args.early_stop:
         args.patience = args.num_epochs
 
     return args
-
-
-def seed_everything(seed=2022):
-    os.environ["PYTHONHASHSEED"] = str(seed)
-
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(seed)
-    random.seed(seed)
-
-
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group["lr"]
-
-
-# collate_fn needs for batch
-def collate_fn(batch):
-    return tuple(zip(*batch))
-
-
-def save_model(model, saved_dir, file_name):
-    check_point = {"net": model.state_dict()}
-    output_path = os.path.join(saved_dir, file_name)
-    torch.save(check_point, output_path)
-
-
-def Mixup(images, masks, alpha=0.2):
-    # masks: one-hot encoding된 y
-    x1, y1 = images[0], masks[0]
-    x2, y2 = images[1], masks[1]
-
-    lambda_param = np.random.beta(alpha, alpha)
-    images = lambda_param * x1 + (1 - lambda_param) * x2
-    masks = lambda_param * y1 + (1 - lambda_param) * y2
-
-    return images, masks
-
 
 def train(args):
 
@@ -179,31 +133,21 @@ def train(args):
         }
     )
 
-    train_transform = A.Compose(
-        [
-            # A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256),
-            # A.Resize(512, 512),
-            # A.GridDropout(ratio = 0.5),
-            # A.RandomRotate90(),
-            A.Normalize(
-                mean=[0.46009142, 0.43957697, 0.41827273],
-                std=[0.21060736, 0.20755924, 0.21633709],
-                max_pixel_value=1.0,
-            ),
-            ToTensorV2(),
-        ]
+    # --model
+    model_module = getattr(
+        import_module("segmentation_models_pytorch"), args.segmentation_model
     )
-
-    val_transform = A.Compose(
-        [
-            A.Normalize(
-                mean=[0.46009142, 0.43957697, 0.41827273],
-                std=[0.21060736, 0.20755924, 0.21633709],
-                max_pixel_value=1.0,
-            ),
-            ToTensorV2(),
-        ]
+    model = model_module(
+        encoder_name=args.encoder_name,
+        encoder_weights=args.encoder_weights,
+        in_channels=3,
+        classes=11,
+        #encoder_output_stride=32,
     )
+    preprocessing_fn = get_preprocessing_fn(args.encoder_name, args.encoder_weights)
+    
+    train_transform = get_transform(mode='train', preprocessing_fn=preprocessing_fn)
+    val_transform = get_transform(mode='valid', preprocessing_fn=preprocessing_fn)
 
     # --dataset
     train_dataset = CustomDataLoader(
@@ -232,16 +176,6 @@ def train(args):
         collate_fn=collate_fn,
     )
 
-    # --model
-    model_module = getattr(
-        import_module("segmentation_models_pytorch"), args.segmentation_model
-    )
-    model = model_module(
-        encoder_name=args.encoder_name,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights=args.encoder_weights,  # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=11,  # model output channels (number of classes in your dataset)
-    )
 
     # --criterion
     if args.criterion == "CrossEntropyLoss":
@@ -258,14 +192,15 @@ def train(args):
         lr=args.learning_rate,
         weight_decay=args.weight_decay,
     )
-    scheduler = MultiStepLR(optimizer, milestones=[args.num_epochs // 2], gamma=0.1)
+    #scheduler = CosineAnnealingLR(optimizer, T_max=args.num_epochs, eta_min=0.)
+    #scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=6, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.6)
+    scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=5, T_mult=3, eta_max=3e-4,  T_up=3, gamma=0.4)
 
     scaler = torch.cuda.amp.GradScaler()
 
     # Early Stopping 변수
     counter = 0
 
-    # print(f'Start training..')
     n_class = 11
     best_loss = 9999999
     best_mIoU = -999999
@@ -303,10 +238,9 @@ def train(args):
                     if args.mixup:
                         images, masks = Mixup(images, masks, alpha=args.alpha)
 
-                    images = torch.stack(images)
-                    masks = torch.stack(masks).long()
+                    images = torch.stack(images).to(device)
+                    masks = torch.stack(masks).long().to(device)
 
-                    images, masks = images.to(device), masks.to(device)
                     model = model.to(device)
 
                     with torch.cuda.amp.autocast():
@@ -317,9 +251,9 @@ def train(args):
                     scaler.step(optimizer)
                     scaler.update()
 
-                    # optimizer.zero_grad()
-                    # loss.backward()
-                    # optimizer.step()
+                    #optimizer.zero_grad()
+                    #loss.backward()
+                    #optimizer.step()
 
                     outputs = torch.argmax(outputs, dim=1).detach().cpu().numpy()
                     masks = masks.detach().cpu().numpy()
@@ -360,16 +294,12 @@ def train(args):
                 }
             )
 
-            save_model(model, saved_dir, "latest.pt")
-
             # validation 주기에 따른 loss 출력 및 best model 저장
             if (epoch + 1) % args.val_every == 0:
 
-                # print(f'Start validation #{epoch + 1}')
                 model.eval()
 
                 with torch.no_grad():
-                    n_class = 11
                     total_loss = 0
                     cnt = 0
 
@@ -384,10 +314,8 @@ def train(args):
                                 f"[Valid] Epoch [{epoch+1}/{args.num_epochs}]"
                             )
 
-                            images = torch.stack(images)
-                            masks = torch.stack(masks).long()
-
-                            images, masks = images.to(device), masks.to(device)
+                            images = torch.stack(images).to(device)
+                            masks = torch.stack(masks).long().to(device)
 
                             # device 할당
                             model = model.to(device)
@@ -417,7 +345,6 @@ def train(args):
                                 }
                             )
 
-                    # IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , sorted_df['Categories'])]
                     IoU_by_class = [
                         {classes: round(IoU, 4)}
                         for IoU, classes in zip(IoU, categories)
@@ -431,12 +358,13 @@ def train(args):
                     )
 
                     avrg_loss = total_loss.item() / cnt
-                    valid_log = "[EPOCH VALID {}/{}] : Valid Loss {} - Valid Accuracy {} - Valid mIoU {}".format(
+                    valid_log = '[EPOCH VALID {}/{}] : Valid Loss {} - Valid Accuracy {} - Valid mIoU {}\nIoU by class{}'.format(
                         epoch + 1,
                         args.num_epochs,
                         round(avrg_loss, 4),
                         round(acc, 4),
                         round(mIoU, 4),
+                        IoU_by_class
                     )
                     print(valid_log)
                     f.write(valid_log + "\n")
@@ -454,6 +382,12 @@ def train(args):
                             ),
                         }
                     )
+                
+                save_model(model, saved_dir, "latest.pt")
+                
+                # 50 이상인 5의 배수마다 ckpt 저장
+                if epoch + 1 > 65 and (epoch + 1)%10 == 0:
+                    save_model(model, saved_dir, f"epoch_{epoch+1}.pt")
 
                 if avrg_loss < best_loss:
                     print(f"!!! Best Loss at epoch: {epoch + 1} !!!")
