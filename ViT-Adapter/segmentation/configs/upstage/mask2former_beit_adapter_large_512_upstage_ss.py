@@ -1,18 +1,18 @@
 # Copyright (c) Shanghai AI Lab. All rights reserved.
 _base_ = [
-    '../_base_/models/mask2former_beit.py',
-    '../_base_/datasets/ade20k.py',
+    '../_base_/models/mask2former_beit_upstage.py',
+    '../_base_/datasets/upstage.py',
     '../_base_/default_runtime.py',
-    '../_base_/schedules/schedule_160k.py'
+    '../_base_/schedules/schedule.py'
 ]
-crop_size = (640, 640)
+crop_size = (512, 512)
 # pretrained = 'https://conversationhub.blob.core.windows.net/beit-share-public/beit/beit_large_patch16_224_pt22k_ft22k.pth'
 pretrained = 'pretrained/beit_large_patch16_224_pt22k_ft22k.pth'
 model = dict(
     pretrained=pretrained,
     backbone=dict(
         type='BEiTAdapter',
-        img_size=640,
+        img_size=512,
         patch_size=16,
         embed_dim=1024,
         depth=24,
@@ -104,11 +104,14 @@ model = dict(
 )
 # dataset settings
 img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+    mean=[106.751564, 112.074585, 117.30821],
+    std=[55.021267, 52.829983, 53.68884],
+    to_rgb=True,
+)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', reduce_zero_label=True),
-    dict(type='Resize', img_scale=(2048, 640), ratio_range=(0.5, 2.0)),
+    dict(type='LoadAnnotations', reduce_zero_label=False),
+    dict(type='Resize', img_scale=(512, 512), ratio_range=(0.5, 2.0)),
     dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PhotoMetricDistortion'),
@@ -122,12 +125,12 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(2048, 640),
-        img_ratios=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
-        flip=True,
+        img_scale=(512, 512),
+        # img_ratios=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
+        flip=False,
         transforms=[
-            dict(type='SETR_Resize', keep_ratio=True,
-                 crop_size=crop_size, setr_multi_scale=True),
+            dict(type='Resize', keep_ratio=True),
+            dict(type='ResizeToMultiple', size_divisor=32),
             dict(type='RandomFlip'),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='ImageToTensor', keys=['img']),
@@ -144,9 +147,10 @@ lr_config = dict(_delete_=True,
                  warmup_ratio=1e-6,
                  power=1.0, min_lr=0.0, by_epoch=False)
 data = dict(samples_per_gpu=2,
+workers_per_gpu=4,
             train=dict(pipeline=train_pipeline),
             val=dict(pipeline=test_pipeline),
             test=dict(pipeline=test_pipeline))
-runner = dict(type='IterBasedRunner')
-checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
-evaluation = dict(interval=16000, metric='mIoU', save_best='mIoU')
+runner = dict(type='IterBasedRunner', max_iters=80000)
+checkpoint_config = dict(by_epoch=False, interval=80000, max_keep_ckpts=1)
+evaluation = dict(interval=16000, metric='mIoU', save_best='mIoU',classwise=True,pre_eval=True)

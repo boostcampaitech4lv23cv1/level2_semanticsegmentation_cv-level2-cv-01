@@ -1,20 +1,20 @@
-exp_name = "Mask2Former + Vitadapter_Large + BeitL Pretrained"
+exp_name = "Mask2Former + Vitadapter_Large + BeitL Pretrained + JJINMAK"
 my_name = "YOON"
 seed = 2022
 gpu_ids = 0
 
 # yapf:disable
 log_config = dict(
-    interval=500,
+    interval=50,
     hooks=[
         dict(type="TextLoggerHook", by_epoch=False),
         dict(
             type="MMSegWandbHook",
-            interval=500,
+            interval=50,
             with_step=False,
             init_kwargs=dict(
-                entity="cv_1",
-                project="segmentation_practice",
+                entity="kidsarebornstars",
+                project="segmentation",
                 name=f"{exp_name}_{my_name}",
             ),
         ),

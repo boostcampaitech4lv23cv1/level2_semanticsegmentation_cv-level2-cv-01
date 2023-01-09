@@ -1,33 +1,40 @@
-# model_cfg
-num_things_classes = 0
-num_stuff_classes = 11
-num_classes = num_things_classes + num_stuff_classes
-norm_cfg = dict(type="SyncBN", requires_grad=True)
+# Copyright (c) Shanghai AI Lab. All rights reserved.
+_base_ = [
+    "../_base_/models/mask2former_beit_upstage.py",
+    "../_base_/datasets/upstage.py",
+    "../_base_/default_runtime.py",
+    "../_base_/schedules/schedule.py",
+]
+crop_size = (512, 512)
+# pretrained = 'https://conversationhub.blob.core.windows.net/beit-share-public/beit/beit_base_patch16_224_pt22k_ft22k.pth'
+pretrained = "pretrained/beit_base_patch16_224_pt22k_ft22k.pth"
 model = dict(
-    type="EncoderDecoderMask2Former",
-    pretrained=None,
+    pretrained=pretrained,
     backbone=dict(
-        type="XCiT",
+        type="BEiTAdapter",
+        img_size=512,
         patch_size=16,
-        embed_dim=384,
+        embed_dim=768,
         depth=12,
-        num_heads=8,
+        num_heads=12,
         mlp_ratio=4,
         qkv_bias=True,
-        use_abs_pos_emb=True,
-        use_rel_pos_bias=False,
+        use_abs_pos_emb=False,
+        use_rel_pos_bias=True,
+        init_values=1e-6,
+        drop_path_rate=0.2,
+        conv_inplane=64,
+        n_points=4,
+        deform_num_heads=12,
+        cffn_ratio=0.25,
+        deform_ratio=0.5,
+        interaction_indexes=[[0, 2], [3, 5], [6, 8], [9, 11]],
     ),
     decode_head=dict(
-        type="Mask2FormerHead",
-        in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
-        # strides=[4, 8, 16, 32],
+        in_channels=[768, 768, 768, 768],
         feat_channels=256,
         out_channels=256,
-        in_index=[0, 1, 2, 3],
-        num_things_classes=num_things_classes,
-        num_stuff_classes=num_stuff_classes,
         num_queries=100,
-        num_transformer_feat_level=3,
         pixel_decoder=dict(
             type="MSDeformAttnPixelDecoder",
             num_outs=3,
@@ -67,7 +74,6 @@ model = dict(
             ),
             init_cfg=None,
         ),
-        enforce_decoder_input_project=False,
         positional_encoding=dict(
             type="SinePositionalEncoding", num_feats=128, normalize=True
         ),
@@ -107,52 +113,72 @@ model = dict(
             ),
             init_cfg=None,
         ),
-        loss_cls=dict(
-            type="CrossEntropyLoss",
-            use_sigmoid=False,
-            loss_weight=2.0,
-            reduction="mean",
-            class_weight=[1.0] * num_classes + [0.1],
-        ),
-        loss_mask=dict(
-            type="CrossEntropyLoss", use_sigmoid=True, reduction="mean", loss_weight=5.0
-        ),
-        loss_dice=dict(
-            type="DiceLoss",
-            use_sigmoid=True,
-            activate=True,
-            reduction="mean",
-            naive_dice=True,
-            eps=1.0,
-            loss_weight=5.0,
-        ),
     ),
-    train_cfg=dict(
-        num_points=12544,
-        oversample_ratio=3.0,
-        importance_sample_ratio=0.75,
-        assigner=dict(
-            type="MaskHungarianAssigner",
-            cls_cost=dict(type="ClassificationCost", weight=2.0),
-            mask_cost=dict(type="CrossEntropyLossCost", weight=5.0, use_sigmoid=True),
-            dice_cost=dict(type="DiceCost", weight=5.0, pred_act=True, eps=1.0),
-        ),
-        sampler=dict(type="MaskPseudoSampler"),
-    ),
-    test_cfg=dict(
-        panoptic_on=True,
-        # For now, the dataset does not support
-        # evaluating semantic segmentation metric.
-        semantic_on=False,
-        instance_on=True,
-        # max_per_image is for instance segmentation.
-        max_per_image=100,
-        iou_thr=0.8,
-        # In Mask2Former's panoptic postprocessing,
-        # it will filter mask area where score is less than 0.5 .
-        filter_low_score=True,
-    ),
-    init_cfg=None,
+    test_cfg=dict(mode="slide", crop_size=crop_size, stride=(341, 341)),
 )
-
-# find_unused_parameters = True
+# dataset settings
+img_norm_cfg = dict(
+    mean=[106.751564, 112.074585, 117.30821],
+    std=[55.021267, 52.829983, 53.68884],
+    to_rgb=True,
+)
+train_pipeline = [
+    dict(type="LoadImageFromFile"),
+    dict(type="LoadAnnotations", reduce_zero_label=False),
+    dict(type="Resize", img_scale=(512, 512), ratio_range=(0.5, 2.0)),
+    dict(type="RandomCrop", crop_size=crop_size, cat_max_ratio=0.75),
+    dict(type="RandomFlip", prob=0.5),
+    dict(type="PhotoMetricDistortion"),
+    dict(type="Normalize", **img_norm_cfg),
+    dict(type="Pad", size=crop_size, pad_val=0, seg_pad_val=255),
+    dict(type="ToMask"),
+    dict(type="DefaultFormatBundle"),
+    dict(type="Collect", keys=["img", "gt_semantic_seg","gt_labels","gt_masks"]),
+]
+test_pipeline = [
+    dict(type="LoadImageFromFile"),
+    dict(
+        type="MultiScaleFlipAug",
+        img_scale=(512, 512),
+        flip=False,
+        flip_direction=["horizontal", "vertical"],
+        transforms=[
+            dict(type="Resize", keep_ratio=True),
+            dict(type="RandomFlip"),
+            dict(type="Normalize", **img_norm_cfg),
+            dict(type="ImageToTensor", keys=["img"]),
+            dict(type="Collect", keys=["img"]),
+        ],
+    ),
+]
+optimizer = dict(
+    _delete_=True,
+    type="AdamW",
+    lr=3e-5,
+    betas=(0.9, 0.999),
+    weight_decay=0.05,
+    constructor="LayerDecayOptimizerConstructor",
+    paramwise_cfg=dict(num_layers=12, layer_decay_rate=0.95),
+)
+lr_config = dict(
+    _delete_=True,
+    policy="poly",
+    warmup="linear",
+    warmup_iters=1500,
+    warmup_ratio=1e-6,
+    power=1.0,
+    min_lr=0.0,
+    by_epoch=False,
+)
+data = dict(
+    samples_per_gpu=4,
+    workers_per_gpu=4,
+    train=dict(pipeline=train_pipeline),
+    val=dict(pipeline=test_pipeline),
+    test=dict(pipeline=test_pipeline),
+)
+runner = dict(type="IterBasedRunner", max_iters=80000)
+checkpoint_config = dict(by_epoch=False, interval=40000, max_keep_ckpts=1)
+evaluation = dict(
+    interval=4000, metric="mIoU", save_best="mIoU", classwise=True, pre_eval=True
+)
