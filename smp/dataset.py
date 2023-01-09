@@ -1,11 +1,13 @@
 import os
-import warnings 
 import cv2
+import warnings 
+warnings.filterwarnings('ignore')
 import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from pycocotools.coco import COCO
-warnings.filterwarnings('ignore')
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 
 def get_classname(classID, cats):
@@ -14,6 +16,62 @@ def get_classname(classID, cats):
             return cats[i]['name']
     return "None"
 
+# collate_fn needs for batch
+def collate_fn(batch):
+    return tuple(zip(*batch))
+
+def Mixup(images, masks, alpha=0.2):
+    # masks: one-hot encoding된 y
+    x1, y1 = images[0], masks[0]
+    x2, y2 = images[1], masks[1]
+
+    lambda_param = np.random.beta(alpha, alpha)
+    images = lambda_param * x1 + (1 - lambda_param) * x2
+    masks = lambda_param * y1 + (1 - lambda_param) * y2
+
+    return images, masks
+
+def get_transform(mode='train', preprocessing_fn=None):
+    transform = []
+
+    if mode=='train':
+        transform = [
+            # geometric
+            A.OneOf([
+                A.augmentations.crops.transforms.CropNonEmptyMaskIfExists(height = 256, width = 256, ignore_values=[[0,0,0]], p=1.0),
+                A.RandomResizedCrop(height = 512, width = 512, scale=(0.08, 1.0), ratio=(0.75, 1.3333333333333333), p=1.0),
+            ],p=0.5),
+            A.Resize(512,512),
+            #A.RandomResizedCrop(512, 512, (0.08, 1.0), p=1.0),
+            A.OneOf([
+                A.GridDropout(ratio=0.2, random_offset=True, holes_number_x=4, holes_number_y=4, fill_value=[255,255,255]),
+                A.CoarseDropout(max_holes=16, fill_value=[255,255,255]),
+            ], p=0.2),
+            A.HorizontalFlip(p=0.5),
+            A.VerticalFlip(p=0.5),
+            A.OneOf([
+                A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=45),
+                A.RandomRotate90(),
+            ], p=0.2),
+
+            # style
+            A.OneOf([
+                A.ChannelShuffle(),
+                A.ToGray(),
+            ],p=0.5),
+            A.RandomBrightnessContrast(p=0.2),
+        ]
+    
+    transform.append(A.Lambda(image=preprocessing_fn))
+    transform.append(A.Normalize(
+                mean=[0.46009142, 0.43957697, 0.41827273],
+                std=[0.21060736, 0.20755924, 0.21633709],
+                max_pixel_value=1.0,
+            ))
+    transform.append(ToTensorV2())
+
+    return A.Compose(transform)
+    
 
 class CustomDataLoader(Dataset):
     """COCO format"""
