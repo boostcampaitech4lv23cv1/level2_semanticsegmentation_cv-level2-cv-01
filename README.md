@@ -67,7 +67,7 @@
     
     <a href='https://attractive-delivery-2c1.notion.site/f8a83a452dab4fed9d0de250ee6d6fd2?v=bed39e7a4ec3491baff52ffb92deddf7'>실험 페이지</a>
     
-    <img src="/level2_semanticsegmentation_cv-level2-cv-01/images/Augmentation_1.png" width="80%" height="50%"/><img src="/level2_semanticsegmentation_cv-level2-cv-01/images/Augmentation_2.png" width="80%" height="50%"/>
+    <img src="/level2_semanticsegmentation_cv-level2-cv-01/images/aug1.png" width="80%" height="50%"/><img src="/level2_semanticsegmentation_cv-level2-cv-01/images/aug2.png" width="80%" height="50%"/>
     
 
 
